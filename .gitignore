@@ -1,3 +1,9 @@
 kubernetes/k8s/
 venv/
 .env
+
+# cachés y archivos compilados
+__pycache__/
+*.pyc
+
+**/session.py
