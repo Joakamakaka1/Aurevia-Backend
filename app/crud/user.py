@@ -5,8 +5,8 @@ from app.auth.security import verify_password
 def get_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
-def create(db: Session, *, email: str, nombre: str, password: str) -> User:
-    user = User(email=email, nombre=nombre, hashed_password=password)
+def create(db: Session, *, email: str, username: str, password: str) -> User:
+    user = User(email=email, username=username, hashed_password=password)
     db.add(user)
     db.commit()
     db.refresh(user)

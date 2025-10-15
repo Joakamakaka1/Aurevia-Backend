@@ -9,13 +9,13 @@ router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
 @router.get("/", response_model=List[UserOut])
 def get_users():
-    return [{"id": 1, "email": "ejemplo@email.com", "nombre": "Juan"}]
+    return [{"id": 1, "email": "ejemplo@email.com", "username": "Juan"}]
 
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     if crud_user.get_by_email(db, payload.email):
         raise HTTPException(status_code=400, detail="Email ya registrado")
-    return crud_user.create(db, email=payload.email, nombre=payload.nombre, password=payload.password)
+    return crud_user.create(db, email=payload.email, username=payload.username, password=payload.password)
 
 @router.post("/login")
 def login(payload: UserLogin, db: Session = Depends(get_db)):

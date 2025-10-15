@@ -6,5 +6,5 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    nombre = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False)
     hashed_password = Column(String(255), nullable=False)
