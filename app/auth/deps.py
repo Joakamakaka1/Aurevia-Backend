@@ -3,7 +3,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.crud.user import get_by_email
+from app.service.user import get_by_email
 from app.auth.security import verify_password
 
 security = HTTPBasic()
