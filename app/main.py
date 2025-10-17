@@ -17,8 +17,8 @@ app.add_exception_handler(Exception, unhandled_error_handler)
 
 origins = [
     "http://localhost:8100",   # Tu frontend en Ionic o similar
-    "http://127.0.0.1:8100",  # Otra posible variación
-    "http://localhost:4200",       # Permitir localhost sin puerto
+    "http://127.0.0.1:8100",   # Otra posible variación
+    "http://localhost:4200",   # Permitir localhost sin puerto
 ]
 
 app.add_middleware(
