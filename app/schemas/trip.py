@@ -13,7 +13,7 @@ class TripBase(BaseModel):
 class TripCreate(TripBase):
     start_date: datetime
     end_date: datetime
-    pass
+    user_id: int
 
 class TripUpdate(TripBase):
     start_date: Optional[datetime] = None

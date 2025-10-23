@@ -10,8 +10,8 @@ def getAllTrips(db: Session) -> List[Trip]:
 def getAllTripsByUser(db: Session, user_id: int) -> List[Trip]:
     return db.query(Trip).filter(Trip.user_id == user_id).all()
 
-def getAllTripsByCountry(db: Session, country_id: str) -> List[Trip]:
-    return db.query(Trip).filter(Trip.country_id == country_id).all()
+# def getAllTripsByCountry(db: Session, country_id: str) -> List[Trip]:
+#     return db.query(Trip).filter(Trip.country_id == country_id).all()
 
 def getAllTripsByDates(db: Session, start_date: str, end_date: str) -> List[Trip]:
     return db.query(Trip).filter(Trip.start_date >= start_date, Trip.end_date <= end_date).all()
@@ -33,9 +33,6 @@ def createTrip(db: Session, trip_data) -> Trip:
     if start > end:
         raise AppError(400, "START_DATE_INVALID", "La fecha de inicio no puede ser posterior a la fecha de fin")
 
-    if start < end:
-        raise AppError(400, "END_DATE_INVALID", "La fecha de fin no puede ser anterior a la fecha de inicio")
-
     data = dict(trip_data)
     data["start_date"] = start
     data["end_date"] = end
@@ -53,7 +50,7 @@ def deleteTripById(trip_id: int):
     pass
 
 def notEmptyField(value, field_name: str):
-    if not value or value.strip() == "":
+    if not value:
         raise AppError(400, f"{field_name.upper()}_EMPTY", f"El {field_name} no puede estar vacío")
     return value
 

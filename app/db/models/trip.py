@@ -15,7 +15,7 @@ class Trip(Base):
     # photo = Column(String(255), nullable=True)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("users", back_populates="trips")
+    user = relationship("User", back_populates="trips")
 
     # country_id = Column(String(100), ForeignKey("countries.id"), nullable=False)
     # country = relationship("countries", back_populates="trips")

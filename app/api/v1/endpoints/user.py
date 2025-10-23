@@ -8,8 +8,13 @@ from app.schemas.user import UserCreate, UserLogin, UserOut
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
 @router.get("/", response_model=List[UserOut])
-def get_users():
-    return [{"id": 1, "email": "ejemplo@email.com", "username": "Juan"}]
+def get_all_users(db: Session = Depends(get_db)):
+    return crud_user.get_all_users(db)
+
+@router.get("/{email}", response_model=UserOut)
+def get_user_by_email(email: str, db: Session = Depends(get_db)):
+    user = crud_user.get_by_email(db, email=email.strip())
+    return user
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
@@ -19,3 +24,14 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 def login(payload: UserLogin, db: Session = Depends(get_db)):
     user = crud_user.authenticate(db, email=payload.email, password=payload.password)
     return user
+
+@router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
+def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db)):
+    return crud_user.update_user_by_id(db, user_id=user_id, user_data=payload.dict())
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    crud_user.delete_user_by_id(db, user_id=user_id)
+    return None
+
+
