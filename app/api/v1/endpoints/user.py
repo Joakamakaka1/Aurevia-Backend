@@ -7,13 +7,18 @@ from app.schemas.user import UserCreate, UserLogin, UserOut
 
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
-@router.get("/", response_model=List[UserOut])
+@router.get("/", response_model=List[UserOut], status_code=status.HTTP_200_OK)
 def get_all_users(db: Session = Depends(get_db)):
     return crud_user.get_all_users(db)
 
-@router.get("/{email}", response_model=UserOut)
+@router.get("/email/{email}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_email(email: str, db: Session = Depends(get_db)):
     user = crud_user.get_by_email(db, email=email.strip())
+    return user
+
+@router.get("/id/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = crud_user.get_user_by_id(db, user_id=user_id)
     return user
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
