@@ -41,7 +41,7 @@ def update_user_by_id(db: Session, user_id: int, user_data) -> User:
     
     if 'email' in user_data:
         existing_user = get_by_email(db, user_data['email'])
-        if existing_user and existing_user.id != user_id:
+        if existing_user:
             raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado por otro usuario")
 
     for key, value in user_data.items():
@@ -50,7 +50,7 @@ def update_user_by_id(db: Session, user_id: int, user_data) -> User:
     db.refresh(user)
     return user
 
-def delete_user_by_id(db: Session, user_id: int) -> User:
+def delete_user_by_id(db: Session, user_id: int) -> None:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")

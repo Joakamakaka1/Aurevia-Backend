@@ -23,11 +23,11 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    return crud_user.create(db, email=payload.email, username=payload.username, password=payload.password)
+    return crud_user.create(db, email=payload.email, username=payload.username, password=payload.hashed_password)
 
 @router.post("/login", response_model=UserOut, status_code=status.HTTP_200_OK)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
-    user = crud_user.authenticate(db, email=payload.email, password=payload.password)
+    user = crud_user.authenticate(db, email=payload.email, password=payload.hashed_password)
     return user
 
 @router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
