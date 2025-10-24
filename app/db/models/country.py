@@ -15,4 +15,4 @@ class Country(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
-    # trips = relationship("Trip", back_populates="country", cascade="all, delete-orphan")
+    trips = relationship("Trip", back_populates="country", cascade="all, delete-orphan")

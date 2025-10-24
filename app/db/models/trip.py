@@ -17,5 +17,5 @@ class Trip(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="trips")
 
-    # country_id = Column(String(100), ForeignKey("countries.id"), nullable=False)
-    # country = relationship("countries", back_populates="trips")
+    country_id = Column(String(100), ForeignKey("countries.id"), nullable=False)
+    country = relationship("Country", back_populates="trips")
