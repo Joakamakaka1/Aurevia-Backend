@@ -14,6 +14,7 @@ class TripCreate(TripBase):
     start_date: datetime
     end_date: datetime
     user_id: int
+    country_id: int
 
 class TripUpdate(TripBase):
     start_date: Optional[datetime] = None

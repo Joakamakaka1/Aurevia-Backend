@@ -13,6 +13,5 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     username: str | None = None
-    hashed_password: str | None = None
     
     model_config = ConfigDict(from_attributes=True)

@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime
 from datetime import datetime, timezone
 from sqlalchemy.orm import relationship
 
-class User(Base):
+class Map(Base):
     __tablename__ = "maps"
 
     id = Column(Integer, primary_key=True)
@@ -17,6 +17,9 @@ class User(Base):
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     user = relationship("User", back_populates="map")
         
+    # Relationship to MapCountry
+    map_countries = relationship("MapCountry", back_populates="map", cascade="all, delete-orphan")
+
 
 
     

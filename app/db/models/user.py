@@ -12,4 +12,4 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
 
     trips = relationship("Trip", back_populates="user", cascade="all, delete-orphan")
-    # map = relationship("Map", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    map = relationship("Map", back_populates="user", uselist=False, cascade="all, delete-orphan")
