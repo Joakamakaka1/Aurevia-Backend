@@ -1,1 +1,21 @@
-# TODO: No se puede añadir dos veces el mismo viaje en el mapa, pero si en el perfil
+# TODO: 14-11-2025: Realacionar Trip, Country y User. Devolver Jsons mas completos con estas nuevas relaciones. Si da tiempo hacer entidad Map
+
+# Ejemplo:
+
+<!-- {
+    "id": 1,
+    "username": "Joaquin",
+    "trip": {
+        "id": 1,
+        "name": "Trip 1",
+        "country": {
+            "id": 1,
+            "name": "Colombia",
+        }
+    }
+    "map": {
+        "id": 1,
+        "countries_visited": 3,
+        "percent_world_visited": 50.0
+    }
+} -->
