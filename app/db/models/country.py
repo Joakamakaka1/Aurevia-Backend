@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.models.trip import Trip
@@ -9,7 +9,7 @@ class Country(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), unique=True)
     
-    trip_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    trip_id: Mapped[int] = mapped_column(ForeignKey("trips.id"), nullable=False)
     trip = relationship("Trip", back_populates="country")   
 
     

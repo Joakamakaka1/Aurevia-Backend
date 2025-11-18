@@ -6,7 +6,7 @@ class TripBase(BaseModel):
     start_date: str
     end_date: str
 
-    "TODO: user_id: int"
+    user_id: int
 
 class TripCreate(TripBase):
     pass

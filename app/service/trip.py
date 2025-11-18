@@ -30,7 +30,7 @@ def get_trip_by_start_date(db: Session, strart_date: str) -> Trip | None:
     return db.query(Trip).filter(Trip.start_date == strart_date).first()
 
 # TODO: Revisar si puede coger la entidad completa y no atributo por atributo
-def create (db: Session, *, name: str, description: str, start_date: str, end_date: str) -> Trip:
+def create (db: Session, *, name: str, description: str, start_date: str, end_date: str, user_id: int) -> Trip:
     " Verificamos si la fecha de entrada es posterior a la de salida "
     if(start_date > end_date):
         raise AppError(400, "INVALID_DATE", "La fecha de inicio no puede ser posterior a la fecha de fin")
@@ -39,7 +39,7 @@ def create (db: Session, *, name: str, description: str, start_date: str, end_da
     if(get_trip_by_start_date(db, start_date)):
         raise AppError(400, "TRIP_ALREADY_EXISTS", "El viaje ya existe")
     
-    trip = Trip(name=name, description=description, start_date=start_date, end_date=end_date)
+    trip = Trip(name=name, description=description, start_date=start_date, end_date=end_date, user_id=user_id)
     db.add(trip)
     db.commit()
     db.refresh(trip)

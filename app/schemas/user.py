@@ -13,5 +13,6 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     username: str | None = None
+    trips: list = []
     
     model_config = ConfigDict(from_attributes=True)
