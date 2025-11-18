@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from typing import List
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db
@@ -26,7 +26,8 @@ def update_country(payload: CountryUpdate, db: Session = Depends(get_db)):
 
 @router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_country(name: str, db: Session = Depends(get_db)):
-    return crud_country.delete_country_by_name(db, name)
+    crud_country.delete_country_by_name(db, name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
                      

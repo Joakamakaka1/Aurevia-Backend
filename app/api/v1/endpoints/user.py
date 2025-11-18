@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from typing import List
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db
@@ -37,6 +37,6 @@ def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db)
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     crud_user.delete_user_by_id(db, user_id=user_id)
-    return None
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

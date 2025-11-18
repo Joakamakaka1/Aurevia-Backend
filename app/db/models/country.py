@@ -1,8 +1,15 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
+from app.db.models.trip import Trip
 
 class Country(Base):
     __tablename__ = "country"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True)
+    
+    trip_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    trip = relationship("Trip", back_populates="country")   
+
+    

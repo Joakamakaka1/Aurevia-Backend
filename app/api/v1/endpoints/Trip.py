@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from typing import List
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db
@@ -24,6 +24,7 @@ def create_trip(payload: TripCreate, db: Session = Depends(get_db)):
 def update_trip(name: str, payload: TripUpdate, db: Session = Depends(get_db)):
     return crud_trip.update(db, name=name, description=payload.description, start_date=payload.start_date, end_date=payload.end_date)
 
-@router.delete("/{name}", response_model=TripDelete, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_trip_by_name(name: str, db: Session = Depends(get_db)):
-    return crud_trip.delete(db, name=name)
+    crud_trip.delete(db, name=name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
