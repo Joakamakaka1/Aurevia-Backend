@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
+from app.schemas.trip import TripOut
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -13,6 +14,6 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     username: str | None = None
-    trips: list = []
+    trips: list[TripOut] = []
     
     model_config = ConfigDict(from_attributes=True)

@@ -25,6 +25,7 @@ def create(db: Session, *, email: str, username: str, password: str) -> User:
     db.commit()
     db.refresh(user)
     return user
+
 def authenticate(db: Session, *, email: str, password: str) -> User:
     user = get_by_email(db, email)
     if not user:
