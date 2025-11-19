@@ -5,10 +5,9 @@ from app.auth.deps import get_db
 from app.schemas.country import *
 from app.service import country as crud_country
 
-
 router = APIRouter(prefix="/v1/country", tags=["Country"])
 
-@router.get("/", response_model=List[CountryRead], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=List[CountryOut], status_code=status.HTTP_200_OK)
 def get_all_countries(db: Session = Depends(get_db)):
     return crud_country.get_all_countries(db)
 

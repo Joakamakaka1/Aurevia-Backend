@@ -9,7 +9,5 @@ class Country(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), unique=True)
     
-    trip_id: Mapped[int] = mapped_column(ForeignKey("trips.id"), nullable=False)
-    trip = relationship("Trip", back_populates="country")   
-
+    trip = relationship("Trip", back_populates="country")
     

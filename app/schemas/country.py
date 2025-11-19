@@ -1,12 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class CountryBase(BaseModel):
-    name: str
+   id: int
+   name: str
 
 class CountryCreate(CountryBase):
-    pass
-
-class CountryRead(CountryBase):
     pass
 
 class CountryUpdate(CountryBase):
@@ -14,3 +12,8 @@ class CountryUpdate(CountryBase):
 
 class CountryDelete(BaseModel):
     pass
+
+class CountryOut(CountryBase):
+    pass
+
+    model_config = ConfigDict(from_attributes=True)

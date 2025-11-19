@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict
+from app.schemas.country import CountryOut
 
 # Solo datos del viaje
 class TripBase(BaseModel):
@@ -13,7 +14,7 @@ class TripCreate(TripBase):
     # Hereda los campos de TripBase. Solo se añade el user_id.
     user_id: int 
 
-# Solo datos del viaje
+# Datos del viaje al actualizarlo
 class TripUpdate(TripBase):
     pass
 
@@ -29,5 +30,6 @@ class TripOut(BaseModel):
     description: str
     start_date: str
     end_date: str
+    country: CountryOut
     
     model_config = ConfigDict(from_attributes=True)

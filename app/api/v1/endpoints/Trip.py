@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db
 from app.service import trip as crud_trip
-from app.schemas.trip import TripCreate, TripUpdate, TripOut
+from app.schemas.trip import *
 
 router = APIRouter(prefix="/v1/trip", tags=["Trip"])
 

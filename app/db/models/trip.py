@@ -12,6 +12,7 @@ class Trip(Base):
     end_date: Mapped[str] = mapped_column(String(255), nullable=False)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
 
     user = relationship("User", back_populates="trips")
-    country = relationship("Country", back_populates="trip", cascade="all, delete-orphan")
+    country = relationship("Country", back_populates="trips")
