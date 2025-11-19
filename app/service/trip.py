@@ -42,7 +42,6 @@ def get_trip_by_start_date_and_user(db: Session, start_date: str, user_id: int) 
     """
     return db.query(Trip).filter(Trip.start_date == start_date, Trip.user_id == user_id).first()
 
-# TODO: Revisar si puede coger la entidad completa y no atributo por atributo
 def create (db: Session, trip_in: TripCreate) -> Trip:
     " Verificamos si la fecha de entrada es posterior a la de salida "
     if(trip_in.start_date > trip_in.end_date):

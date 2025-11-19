@@ -19,7 +19,7 @@ def get_country_by_name(name: str, db: Session = Depends(get_db)):
 def create_country(payload: CountryCreate, db: Session = Depends(get_db)):
     return crud_country.create_country(db, payload.name)
 
-@router.patch("/{name}", response_model=CountryUpdate, status_code=status.HTTP_200_OK)
+@router.put("/{name}", response_model=CountryUpdate, status_code=status.HTTP_200_OK)
 def update_country(payload: CountryUpdate, db: Session = Depends(get_db)):
     return crud_country.update_country_by_name(db, payload.name)
 

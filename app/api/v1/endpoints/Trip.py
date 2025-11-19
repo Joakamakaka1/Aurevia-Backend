@@ -15,7 +15,6 @@ def get_all_trips(db: Session = Depends(get_db)):
 def get_trip_by_name(name: str, db: Session = Depends(get_db)):
     return crud_trip.get_trip_by_name(db, name)
 
-# TODO: Revisar si puede coger la entidad completa y no atributo por atributo
 @router.post("/", response_model=TripOut, status_code = status.HTTP_201_CREATED)
 def create_trip(payload: TripCreate, db: Session = Depends(get_db)):
     return crud_trip.create(db, trip_in=payload)
