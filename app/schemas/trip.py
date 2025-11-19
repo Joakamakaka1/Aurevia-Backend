@@ -11,8 +11,9 @@ class TripBase(BaseModel):
 
 # Añade la FK: user_id
 class TripCreate(TripBase):
-    # Hereda los campos de TripBase. Solo se añade el user_id.
+    # Hereda los campos de TripBase. Añade user_id y country_id.
     user_id: int 
+    country_id: int
 
 # Datos del viaje al actualizarlo
 class TripUpdate(TripBase):
