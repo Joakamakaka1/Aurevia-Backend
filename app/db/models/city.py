@@ -10,7 +10,7 @@ class City(Base):
     latitude: Mapped[float] = mapped_column(nullable=True)
     longitude: Mapped[float] = mapped_column(nullable=True)
 
-    country_id: Mapped[int] = mapped_column(ForeignKey("country.id"), nullable=False)
+    country_id: Mapped[int] = mapped_column(ForeignKey("country.id"), nullable=True)
 
     # Relaciones
     country = relationship("Country", back_populates="cities")

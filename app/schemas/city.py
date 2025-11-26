@@ -6,7 +6,8 @@ class CityBase(BaseModel):
     longitude: float
 
 class CityCreate(CityBase):
-    country_id: int
+    # country_id: int
+    pass
 
 class CityUpdate(CityBase):
     pass
@@ -17,7 +18,7 @@ class CityDelete(BaseModel):
 class CityOut(BaseModel):
     id: int
     name: str
-    country_id: int
+    # country_id: int
     latitude: float
     longitude: float
    
