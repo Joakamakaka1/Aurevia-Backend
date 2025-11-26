@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.db.models.trip import Trip
-from app.auth.security import verify_password
 from app.core.exceptions import AppError
 from app.schemas.trip import TripCreate, TripUpdate
 
@@ -74,8 +73,8 @@ def update (db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
     db.refresh(trip)
     return trip
 
-def delete (db: Session, *, name: str) -> Trip:
+def delete (db: Session, *, name: str) -> None:
     trip = Trip(name=name)
     db.delete(trip)
     db.commit()
-    return trip
+    return None
