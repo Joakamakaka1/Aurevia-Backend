@@ -74,9 +74,8 @@ def update (db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
     db.refresh(trip)
     return trip
 
-def delete (db: Session, *, name: str, description: str, start_date: str, end_date: str) -> Trip:
-    trip = Trip(name=name, description=description, start_date=start_date, end_date=end_date)
-    db.add(trip)
+def delete (db: Session, *, name: str) -> Trip:
+    trip = Trip(name=name)
+    db.delete(trip)
     db.commit()
-    db.refresh(trip)
     return trip
