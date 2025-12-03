@@ -16,3 +16,4 @@ class Trip(Base):
 
     user = relationship("User", back_populates="trips")
     country = relationship("Country", back_populates="trips")
+    comments = relationship("Comment", back_populates="trip", cascade="all, delete-orphan")

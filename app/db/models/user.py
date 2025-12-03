@@ -11,3 +11,4 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
 
     trips = relationship("Trip", back_populates="user", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
