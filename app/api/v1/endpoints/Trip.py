@@ -19,11 +19,11 @@ def get_trip_by_name(name: str, db: Session = Depends(get_db)):
 def create_trip(payload: TripCreate, db: Session = Depends(get_db)):
     return crud_trip.create(db, trip_in=payload)
 
-@router.put("/{name}", response_model=TripOut, status_code= status.HTTP_200_OK)
+@router.put("/{id}", response_model=TripOut, status_code= status.HTTP_200_OK)
 def update_trip(id: int, payload: TripUpdate, db: Session = Depends(get_db)):
     return crud_trip.update(db, trip_id=id, trip_in=payload)
 
-@router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trip_by_name(name: str, db: Session = Depends(get_db)):
-    crud_trip.delete(db, name=name)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_trip_by_name(id: str, db: Session = Depends(get_db)):
+    crud_trip.delete(db, id=id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

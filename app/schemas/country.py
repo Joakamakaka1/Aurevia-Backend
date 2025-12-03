@@ -12,7 +12,7 @@ class CountryUpdate(CountryBase):
 class CountryDelete(BaseModel):
     pass
 
-class CountryOut(CountryBase):
+class CountryOut(BaseModel):
     id: int
     name: str
 

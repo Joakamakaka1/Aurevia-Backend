@@ -59,6 +59,7 @@ def create (db: Session, trip_in: TripCreate) -> Trip:
 def update (db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
     " Verificamos si el viaje existe "
     trip = get_trip_by_id(db, trip_id)
+    
     if not trip:
         raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
     
@@ -73,8 +74,13 @@ def update (db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
     db.refresh(trip)
     return trip
 
-def delete (db: Session, *, name: str) -> None:
-    trip = Trip(name=name)
+def delete (db: Session, *, id: int) -> None:
+    trip = get_trip_by_id(db, id)
+
+    if not trip:
+        raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
+    
     db.delete(trip)
     db.commit()
     return None
+

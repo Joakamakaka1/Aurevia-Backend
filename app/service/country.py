@@ -30,7 +30,7 @@ def create_country(db: Session, name: str) -> Country:
     db.refresh(country)
     return country
 
-def update_country_by_name(db: Session, name: str) -> Country:
+def update_country_by_name(db: Session, name: str, new_name: str) -> Country:
     """
 
     ** Actualiza una ciudad por su nombre **
@@ -45,7 +45,7 @@ def update_country_by_name(db: Session, name: str) -> Country:
     if not country: 
         raise AppError(404, "COUNTRY NOT FOUND", "Country not found")
     
-    country.name = name
+    country.name = new_name
     db.commit()
     db.refresh(country)
     return country
@@ -60,7 +60,7 @@ def delete_country_by_name(db: Session, name: str) -> None:
     - Si la encuentra, se elimina
 
     """
-    country = db.query(Country).filter(Country.name == name).first()
+    country = get_country_by_name(db, name)
 
     if not country:
         raise AppError(404, "COUNTRY NOT FOUND", "Country not found")

@@ -12,19 +12,19 @@ class AppError(Exception):
 async def app_error_handler(request: Request, exc: AppError):
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": {"code": exc.code, "message": exc.message}}
+        content={"error": {"code": exc.code, "message": exc.message}, "details": None}
     )
 
 # Convertir 422 de Pydantic a 400 Bad Request
 async def validation_error_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=400,
-        content={"error": {"code": "BAD_REQUEST", "message": "Datos inválidos en la petición"}}
+        content={"error": {"code": "BAD_REQUEST", "message": "Datos inválidos en la petición"}, "details": exc.errors()}
     )
 
 # 500 genérico para lo no controlado
 async def unhandled_error_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
-        content={"error": {"code": "SERVER_ERROR", "message": "Error interno del servidor"}}
+        content={"error": {"code": "SERVER_ERROR", "message": "Error interno del servidor"}, "details": str(exc)}
     )

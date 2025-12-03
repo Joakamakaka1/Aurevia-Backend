@@ -19,9 +19,9 @@ def get_country_by_name(name: str, db: Session = Depends(get_db)):
 def create_country(payload: CountryCreate, db: Session = Depends(get_db)):
     return crud_country.create_country(db, payload.name)
 
-@router.put("/{name}", response_model=CountryUpdate, status_code=status.HTTP_200_OK)
-def update_country(payload: CountryUpdate, db: Session = Depends(get_db)):
-    return crud_country.update_country_by_name(db, payload.name)
+@router.put("/{name}", response_model=CountryOut, status_code=status.HTTP_200_OK)
+def update_country(name: str, payload: CountryUpdate, db: Session = Depends(get_db)):
+    return crud_country.update_country_by_name(db, name=name, new_name=payload.name)
 
 @router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_country(name: str, db: Session = Depends(get_db)):
