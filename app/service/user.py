@@ -10,6 +10,9 @@ def get_all_users(db: Session) -> list[User]:
 def get_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
+def get_by_username(db: Session, username: str) -> User | None:
+    return db.query(User).filter(User.username == username).first()
+
 def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
@@ -18,6 +21,9 @@ def create(db: Session, *, email: str, username: str, password: str) -> User:
         raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado")
     user = User(email=email, username=username, hashed_password=password)
 
+    if get_by_username(db, username):
+        raise AppError(409, "USERNAME_DUPLICATED", "El nombre de usuario ya está registrado")
+    
     if len(username) < 3:
         raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
 

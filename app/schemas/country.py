@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
 class CountryBase(BaseModel):
-   id: int
    name: str
 
 class CountryCreate(CountryBase):
@@ -14,6 +13,7 @@ class CountryDelete(BaseModel):
     pass
 
 class CountryOut(CountryBase):
-    pass
+    id: int
+    name: str
 
     model_config = ConfigDict(from_attributes=True)

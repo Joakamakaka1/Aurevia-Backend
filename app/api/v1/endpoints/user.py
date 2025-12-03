@@ -11,7 +11,12 @@ router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 def get_all_users(db: Session = Depends(get_db)):
     return crud_user.get_all_users(db)
 
-@router.get("/{email}", response_model=UserOut, status_code=status.HTTP_200_OK)
+@router.get("/username/{username}", response_model=UserOut, status_code=status.HTTP_200_OK)
+def get_user_by_username(username: str, db: Session = Depends(get_db)):
+    user = crud_user.get_by_username(db, username=username.strip())
+    return user
+
+@router.get("/email/{email}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_email(email: str, db: Session = Depends(get_db)):
     user = crud_user.get_by_email(db, email=email.strip())
     return user

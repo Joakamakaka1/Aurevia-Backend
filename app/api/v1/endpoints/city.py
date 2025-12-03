@@ -11,11 +11,11 @@ router = APIRouter(prefix="/v1/city", tags=["City"])
 def get_all_cities(db: Session = Depends(get_db)):
     return crud_city.get_all_cities(db)
 
-@router.get("/{name}", response_model=CityOut, status_code=status.HTTP_200_OK)
+@router.get("/name/{name}", response_model=CityOut, status_code=status.HTTP_200_OK)
 def get_city_by_name(name: str, db: Session = Depends(get_db)):
     return crud_city.get_city_by_name(db, name)
 
-@router.get("/{id}", response_model=CityOut, status_code=status.HTTP_200_OK)
+@router.get("/id/{id}", response_model=CityOut, status_code=status.HTTP_200_OK)
 def get_city_by_id(id: int, db: Session = Depends(get_db)):
     return crud_city.get_city_by_id(db, id)
 
