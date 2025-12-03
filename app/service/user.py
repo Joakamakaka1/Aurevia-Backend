@@ -17,15 +17,22 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 def create(db: Session, *, email: str, username: str, password: str) -> User:
+    # Validar duplicados primero
     if get_by_email(db, email):
         raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado")
-    user = User(email=email, username=username, hashed_password=password)
-
+    
     if get_by_username(db, username):
         raise AppError(409, "USERNAME_DUPLICATED", "El nombre de usuario ya está registrado")
     
+    # Validar formato/longitud (la longitud también se valida en el schema, pero mantenemos por si acaso)
     if len(username) < 3:
         raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
+    
+    if len(username) > 50:
+        raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
+    
+    # Crear usuario después de todas las validaciones
+    user = User(email=email, username=username, hashed_password=password)
 
     db.add(user)
     db.commit()
@@ -41,24 +48,43 @@ def authenticate(db: Session, *, email: str, password: str) -> User:
         raise AppError(400, "INVALID_PASSWORD", "La contraseña no es correcta")
     return user
 
-def update_user_by_id(db: Session, user_id: int, user_data) -> User:
-    user = db.query(User).filter(User.id == user_id).first()
+def update_user_by_id(db: Session, user_id: int, user_data: dict) -> User:
+    # Reutilizar get_user_by_id en lugar de duplicar la query
+    user = get_user_by_id(db, user_id)
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     
-    if 'email' in user_data:
+    # Validar email duplicado (excluyendo el mismo usuario)
+    if 'email' in user_data and user_data['email'] is not None:
         existing_user = get_by_email(db, user_data['email'])
-        if existing_user:
+        if existing_user and existing_user.id != user_id:
             raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado por otro usuario")
+    
+    # Validar username duplicado (excluyendo el mismo usuario)
+    if 'username' in user_data and user_data['username'] is not None:
+        existing_user = get_by_username(db, user_data['username'])
+        if existing_user and existing_user.id != user_id:
+            raise AppError(409, "USERNAME_DUPLICATED", "El nombre de usuario ya está registrado por otro usuario")
+        
+        # Validar longitud de username
+        username = user_data['username']
+        if len(username) < 3:
+            raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
+        if len(username) > 50:
+            raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
 
+    # Actualizar solo los campos que no son None
     for key, value in user_data.items():
-        setattr(user, key, value)
+        if value is not None:
+            setattr(user, key, value)
+    
     db.commit()
     db.refresh(user)
     return user
 
 def delete_user_by_id(db: Session, user_id: int) -> None:
-    user = db.query(User).filter(User.id == user_id).first()
+    # Reutilizar get_user_by_id en lugar de duplicar la query
+    user = get_user_by_id(db, user_id)
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
 

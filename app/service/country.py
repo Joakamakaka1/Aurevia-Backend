@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.core.exceptions import AppError
 from app.db.models.country import Country
+from app.schemas.country import CountryCreate, CountryUpdate
 
 def get_all_countries(db: Session) -> list[Country]:
     return db.query(Country).all()
@@ -8,7 +9,7 @@ def get_all_countries(db: Session) -> list[Country]:
 def get_country_by_name(db: Session, name: str) -> Country | None:
     """
     
-    ** Obtener una ciudad por su nombre **
+    ** Obtener un país por su nombre **
 
     - Filtramos la tabla de Country por nombre verificando que coincida 
     con el nombre indicado por parámetro
@@ -16,54 +17,95 @@ def get_country_by_name(db: Session, name: str) -> Country | None:
     """
     return db.query(Country).filter(Country.name == name).first()
 
-def create_country(db: Session, name: str) -> Country:
+def get_country_by_id(db: Session, country_id: int) -> Country | None:
+    """
+
+    ** Obtener un país por su ID **
+
+    - Filtramos la tabla de Country por ID verificando que coincida 
+    con el ID indicado por parámetro
+
+    """
+    return db.query(Country).filter(Country.id == country_id).first()
+
+def validate_country_name_length(name: str) -> None:
+    """Valida longitud del nombre del país"""
+    if len(name) < 2:
+        raise AppError(400, "NAME_TOO_SHORT", "El nombre del país debe tener al menos 2 caracteres")
+    if len(name) > 100:
+        raise AppError(400, "NAME_TOO_LONG", "El nombre del país no puede tener más de 100 caracteres")
+
+def create_country(db: Session, country_in: CountryCreate) -> Country:
     """
     
-    ** Crear una nueva ciudad **
+    ** Crear un nuevo país **
 
-    - Asignamos el nombre indicado por parámetro a la propiedad name del objeto COUNTRY
+    - Asignamos el nombre indicado por parámetro a la propiedad name del objeto Country
 
     """
-    country = Country(name = name)
+    # Validar nombre duplicado
+    if get_country_by_name(db, country_in.name):
+        raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
+    
+    # Validar longitud del nombre (también validado en schema, pero mantenemos por si acaso)
+    validate_country_name_length(country_in.name)
+    
+    country = Country(name=country_in.name)
     db.add(country)
     db.commit()
     db.refresh(country)
     return country
 
-def update_country_by_name(db: Session, name: str, new_name: str) -> Country:
+def update_country(db: Session, country_id: int, country_in: CountryUpdate) -> Country:
     """
 
-    ** Actualiza una ciudad por su nombre **
+    ** Actualiza un país por su ID **
 
-    - Seleccionamos la ciudad que se desea actualizar
-    - Si no la encuentra, se lanza un error
-    - Si la encuentra, se actualiza el nombre
+    - Seleccionamos el país que se desea actualizar
+    - Si no lo encuentra, se lanza un error
+    - Si lo encuentra, se actualiza
     
     """
-    country = get_country_by_name(db, name)
-
+    # Reutilizar get_country_by_id
+    country = get_country_by_id(db, country_id)
     if not country: 
-        raise AppError(404, "COUNTRY NOT FOUND", "Country not found")
+        raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
     
-    country.name = new_name
+    # Convertir a dict solo con campos no-None
+    country_data = country_in.model_dump(exclude_unset=True)
+    
+    # Validar nombre duplicado si se está actualizando (excluyendo el mismo país)
+    if 'name' in country_data and country_data['name'] is not None:
+        existing_country = get_country_by_name(db, country_data['name'])
+        if existing_country and existing_country.id != country_id:
+            raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
+        
+        # Validar longitud del nombre
+        validate_country_name_length(country_data['name'])
+    
+    # Actualizar solo campos no-None
+    for key, value in country_data.items():
+        if value is not None:
+            setattr(country, key, value)
+    
     db.commit()
     db.refresh(country)
     return country
 
-def delete_country_by_name(db: Session, name: str) -> None:
+def delete_country(db: Session, country_id: int) -> None:
     """
 
-    ** Borra una ciudad por su nombre **
+    ** Borra un país por su ID **
 
-    - Seleccionamos la ciudad que se desea eliminar
-    - Si no la encuentra, se lanza un error
-    - Si la encuentra, se elimina
+    - Seleccionamos el país que se desea eliminar
+    - Si no lo encuentra, se lanza un error
+    - Si lo encuentra, se elimina
 
     """
-    country = get_country_by_name(db, name)
-
+    # Reutilizar get_country_by_id
+    country = get_country_by_id(db, country_id)
     if not country:
-        raise AppError(404, "COUNTRY NOT FOUND", "Country not found")
+        raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
     
     db.delete(country)
     db.commit()

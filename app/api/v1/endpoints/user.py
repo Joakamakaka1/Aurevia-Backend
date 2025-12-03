@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import get_db
 from app.service import user as crud_user
 from app.schemas.user import *
+from app.core.exceptions import AppError
 
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
@@ -14,16 +15,22 @@ def get_all_users(db: Session = Depends(get_db)):
 @router.get("/username/{username}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_username(username: str, db: Session = Depends(get_db)):
     user = crud_user.get_by_username(db, username=username.strip())
+    if not user:
+        raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.get("/email/{email}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_email(email: str, db: Session = Depends(get_db)):
     user = crud_user.get_by_email(db, email=email.strip())
+    if not user:
+        raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.get("/id/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     user = crud_user.get_user_by_id(db, user_id=user_id)
+    if not user:
+        raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -36,12 +43,11 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     return user
 
 @router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
-def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db)):
-    return crud_user.update_user_by_id(db, user_id=user_id, user_data=payload.dict())
+def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
+    return crud_user.update_user_by_id(db, user_id=user_id, user_data=payload.model_dump(exclude_unset=True))
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     crud_user.delete_user_by_id(db, user_id=user_id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
