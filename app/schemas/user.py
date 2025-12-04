@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
-from typing import Optional
+from typing import Optional, Literal
 from app.schemas.trip import TripBasic
 from app.schemas.comment import CommentBasic
 
@@ -28,6 +28,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: str
     password: str  # El cliente envía la contraseña en texto plano, se hashea en el servidor
+    role: Optional[Literal["user", "admin", "superadmin"]] = "user"  # Role opcional, por defecto "user"
     
     @field_validator('username')
     @classmethod
@@ -46,6 +47,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     password: Optional[str] = None  # El cliente envía la contraseña en texto plano
+    role: Optional[Literal["user", "admin", "superadmin"]] = None
     
     @field_validator('username')
     @classmethod
@@ -65,10 +67,27 @@ class UserOut(BaseModel):
     """Schema completo de usuario con relaciones para respuestas"""
     id: int
     email: EmailStr
-    username: str 
+    username: str
+    role: str  # Incluir role en la respuesta
     trips: list[TripBasic] = []  # Solo info básica de viajes (sin comments anidados)
     comments: list[CommentBasic] = []  # Solo info básica de comentarios (sin viajes anidados)
     # NO incluimos comments del usuario para evitar redundancia
     # Hay endpoint específico para los comentarios del usuario: /comment/user/{user_id}
     
     model_config = ConfigDict(from_attributes=True)
+
+# ============================================================================
+# SCHEMA PARA TOKEN JWT
+# ============================================================================
+
+class Token(BaseModel):
+    """Schema para la respuesta de login con token JWT"""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut  # Información del usuario autenticado
+
+class TokenData(BaseModel):
+    """Schema para los datos dentro del token JWT"""
+    user_id: int
+    username: str
+    role: str

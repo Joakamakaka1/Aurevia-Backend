@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Response, status
 from typing import List
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db
+from app.auth.jwt import create_access_token
 from app.service import user as crud_user
 from app.schemas.user import *
 from app.core.exceptions import AppError
@@ -35,12 +36,34 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    return crud_user.create(db, email=payload.email, username=payload.username, password=payload.password)
+    return crud_user.create(
+        db, 
+        email=payload.email, 
+        username=payload.username, 
+        password=payload.password,
+        role=payload.role
+    )
 
-@router.post("/login", response_model=UserOut, status_code=status.HTTP_200_OK)
+@router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
+    # Autenticar usuario
     user = crud_user.authenticate(db, email=payload.email, password=payload.password)
-    return user
+    
+    # Crear token JWT con información del usuario
+    access_token = create_access_token(
+        data={
+            "user_id": user.id,
+            "username": user.username,
+            "role": user.role
+        }
+    )
+    
+    # Retornar token y datos del usuario
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user
+    }
 
 @router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):

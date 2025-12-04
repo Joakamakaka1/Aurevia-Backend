@@ -6,7 +6,7 @@ from app.db.models.country import Country
 from app.db.models.city import City
 from app.db.models.trip import Trip
 from app.db.models.comment import Comment
-from app.auth.security import hash_password # Assuming this exists, otherwise I'll use a placeholder or check imports
+from app.auth.security import hash_password
 
 # Helper to generate random strings
 def random_string(length=10):
@@ -14,34 +14,46 @@ def random_string(length=10):
     return ''.join(random.choice(letters) for i in range(length))
 
 def seed_db(db: Session):
+    """
+    Seed the database with initial data only if it's empty.
+    Checks if there are existing users before seeding.
+    """
+    print("----- CHECKING DATABASE STATUS -----")
+    
+    # Verificar si ya existen datos en la base de datos
+    existing_users = db.query(User).count()
+    existing_countries = db.query(Country).count()
+    
+    if existing_users > 0 or existing_countries > 0:
+        print(f"✓ Database already has data:")
+        print(f"  - Users: {existing_users}")
+        print(f"  - Countries: {existing_countries}")
+        print(f"  - Trips: {db.query(Trip).count()}")
+        print(f"  - Cities: {db.query(City).count()}")
+        print(f"  - Comments: {db.query(Comment).count()}")
+        print("----- SKIPPING SEED (Database already populated) -----")
+        return
+    
+    print("✓ Database is empty, proceeding with seeding...")
     print("----- SEEDING DATABASE -----")
     
-    # 1. Clean old data (Order matters because of Foreign Keys)
-    print("Cleaning old data...")
-    db.query(Comment).delete()
-    db.query(Trip).delete()
-    db.query(City).delete()
-    db.query(Country).delete()
-    db.query(User).delete()
-    db.commit()
-
     # 2. Seed Users
     print("Seeding Users...")
     users = []
     for i in range(5):
         username = f"user_{random_string(5)}"
         email = f"{username}@example.com"
-        # Using a simple hash or placeholder if get_password_hash isn't easily available, 
-        # but better to try to find the real one. 
-        # I'll assume a simple string for now if I can't find the auth util, 
-        # but based on file list 'app.core' exists.
-        # Let's use a dummy hash for simplicity and speed unless strict auth is needed.
-        hashed_password = "hashed_password_secret" 
+        # Hashear contraseña usando la función de seguridad
+        plain_password = "password123"
+        hashed_password = hash_password(plain_password)
+        # Asignar role (por defecto 'user', pero podríamos hacer uno admin)
+        role = "admin" if i == 0 else "user"  # Primer usuario es admin
         
         user = User(
             username=username,
             email=email,
-            hashed_password=hashed_password
+            hashed_password=hashed_password,
+            role=role
         )
         db.add(user)
         users.append(user)
@@ -50,6 +62,8 @@ def seed_db(db: Session):
     # Refresh users to get IDs
     for user in users:
         db.refresh(user)
+    
+    print(f"Created {len(users)} users (1 admin, {len(users)-1} regular users)")
 
     # 3. Seed Locations (Countries and Cities)
     print("Seeding Locations...")
@@ -113,3 +127,10 @@ def seed_db(db: Session):
     db.commit()
 
     print("----- DATABASE SEEDED SUCCESSFULLY -----")
+    print(f"Summary:")
+    print(f"  - Users: {len(users)}")
+    print(f"  - Countries: {len(countries)}")
+    print(f"  - Cities: {len(countries) * 2}")
+    print(f"  - Trips: {len(trips)}")
+    print(f"  - Comments: {len(trips) * 3}")
+    print(f"  - Default password for all users: 'password123'")

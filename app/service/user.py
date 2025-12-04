@@ -16,7 +16,7 @@ def get_by_username(db: Session, username: str) -> User | None:
 def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
-def create(db: Session, *, email: str, username: str, password: str) -> User:
+def create(db: Session, *, email: str, username: str, password: str, role: str = "user") -> User:
     # Validar duplicados primero
     if get_by_email(db, email):
         raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado")
@@ -34,8 +34,8 @@ def create(db: Session, *, email: str, username: str, password: str) -> User:
     # HASHEAR LA CONTRASEÑA ANTES DE GUARDARLA
     hashed_pwd = hash_password(password)
     
-    # Crear usuario después de todas las validaciones
-    user = User(email=email, username=username, hashed_password=hashed_pwd)
+    # Crear usuario después de todas las validaciones (incluyendo role)
+    user = User(email=email, username=username, hashed_password=hashed_pwd, role=role)
 
     db.add(user)
     db.commit()

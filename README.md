@@ -1,51 +1,53 @@
-# Travel Social Platform
+# Aurevia API - Travel Social Platform
 
-## Descripción
+## 📝 Descripción
 
-Plataforma social centrada en los viajes, diseñada para fomentar la interacción entre personas a través de sus experiencias viajeras. Los usuarios pueden crear perfiles, compartir viajes realizados y publicar información útil sobre cada destino. El objetivo es crear una comunidad colaborativa donde los viajes sirvan como punto de encuentro, intercambio cultural e inspiración mutua para descubrir el mundo.
+API REST para una plataforma social centrada en viajes. Los usuarios pueden crear perfiles, compartir experiencias de viaje, comentar viajes de otros y explorar destinos. Diseñada con FastAPI, JWT authentication, y MySQL.
 
-## Modelo de Datos
+---
 
-### Entidades Principales
+## 🗄️ Modelo de Datos
 
-#### **User**
+### Entidades Implementadas
 
-Usuario de la plataforma.
+#### **User** (Usuario)
+
+Representa un usuario de la plataforma con autenticación JWT y roles.
 
 **Atributos:**
 
-- `id` (PK)
-- `username` (único)
-- `email` (único)
-- `hashed_password` (hash)
-- `profile_photo` (URL/path, opcional)
-- `bio` (texto corto, opcional)
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+- `id` (PK, Integer, Auto-increment)
+- `email` (String 255, Único, Requerido)
+- `username` (String 255, Único, Requerido)
+- `hashed_password` (String 255, Requerido) - Hash bcrypt
+- `role` (Enum: 'user', 'admin', 'superadmin', Default: 'user')
 
 **Relaciones:**
 
 - Tiene muchos `Trip` (1:N)
-- Tiene muchas `Friendship` (1:N)
-- Escribe muchos `Comment` (1:N)
+- Tiene muchos `Comment` (1:N)
+
+**Validaciones:**
+
+- Username: 3-50 caracteres
+- Email: Formato válido (validado por Pydantic)
+- Password: Hasheado con bcrypt, truncado a 72 bytes
 
 ---
 
-#### **Trip**
+#### **Trip** (Viaje)
 
-Viaje realizado por un usuario.
+Viaje realizado por un usuario a un país.
 
 **Atributos:**
 
-- `id` (PK)
-- `user_id` (FK → User)
-- `country_id` (FK → Country)
-- `title` (nombre del viaje)
-- `description` (texto largo, opcional)
-- `start_date` (fecha)
-- `end_date` (fecha)
-- `photos` (array de URLs)
-- `created_at` (timestamp)
+- `id` (PK, Integer, Auto-increment)
+- `name` (String 255, Requerido)
+- `description` (String 255, Requerido)
+- `start_date` (String 255, Requerido) - Formato: YYYY-MM-DD
+- `end_date` (String 255, Requerido) - Formato: YYYY-MM-DD
+- `user_id` (FK → User, Requerido)
+- `country_id` (FK → Country, Requerido)
 
 **Relaciones:**
 
@@ -53,155 +55,174 @@ Viaje realizado por un usuario.
 - Pertenece a un `Country` (N:1)
 - Tiene muchos `Comment` (1:N)
 
+**Validaciones:**
+
+- Name: 3-100 caracteres
+- Description: 10-500 caracteres
+- Fechas: Validación de consistencia (end_date >= start_date)
+
 ---
 
-#### **Country**
+#### **Country** (País)
 
-País visitado.
+País que puede ser visitado.
 
 **Atributos:**
 
-- `id` (PK)
-- `name` (único)
-- `code` (ISO código, ej: "ES", "FR", único)
-- `flag` (URL/emoji, opcional)
+- `id` (PK, Integer, Auto-increment)
+- `name` (String 255, Único, Requerido)
 
 **Relaciones:**
 
 - Tiene muchos `Trip` (1:N)
 - Tiene muchas `City` (1:N)
 
+**Validaciones:**
+
+- Name: 2-100 caracteres
+- Nombre único (no duplicados)
+
 ---
 
-#### **City**
+#### **City** (Ciudad)
 
 Ciudad o localidad específica dentro de un país.
 
 **Atributos:**
 
-- `id` (PK)
-- `name`
-- `country_id` (FK → Country)
-- `latitude` (para mapa futuro)
-- `longitude` (para mapa futuro)
+- `id` (PK, Integer, Auto-increment)
+- `name` (String 255, Único, Requerido)
+- `latitude` (Float, Nullable)
+- `longitude` (Float, Nullable)
+- `country_id` (FK → Country, Nullable)
 
 **Relaciones:**
 
 - Pertenece a un `Country` (N:1)
 
+**Validaciones:**
+
+- Name: 2-100 caracteres
+- Nombre único (no duplicados)
+
 ---
 
-#### **Comment**
+#### **Comment** (Comentario)
 
-Comentario en un viaje.
+Comentario en un viaje específico.
 
 **Atributos:**
 
-- `id` (PK)
-- `trip_id` (FK → Trip)
-- `user_id` (FK → User)
-- `content` (texto)
-- `created_at` (timestamp)
+- `id` (PK, Integer, Auto-increment)
+- `content` (String 255, Requerido)
+- `created_at` (DateTime, Auto-generado)
+- `user_id` (FK → User, Requerido)
+- `trip_id` (FK → Trip, Requerido)
 
 **Relaciones:**
 
 - Pertenece a un `Trip` (N:1)
 - Es escrito por un `User` (N:1)
 
----
+**Validaciones:**
 
-#### **Friendship**
-
-Relación de amistad entre usuarios.
-
-**Atributos:**
-
-- `id` (PK)
-- `user_id` (FK → User) - quien envía la solicitud
-- `friend_id` (FK → User) - quien recibe la solicitud
-- `status` (enum: 'pending', 'accepted', 'rejected')
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
-
-**Relaciones:**
-
-- Conecta dos `User` (N:1 con user_id, N:1 con friend_id)
+- Content: 5-200 caracteres
 
 ---
 
-## Diagrama de Relaciones
+## 📊 Diagrama de Relaciones
 
 ```
-                    ┌─────────┐
-                    │  User   │
-                    └─────────┘
-                         │
-           ┌─────────────┼─────────────┐
-           │             │             │
-           ▼             ▼             ▼
-    ┌───────────┐  ┌─────────┐  ┌───────────┐
-    │Friendship │  │  Trip   │  │ Comment   │
-    └───────────┘  └─────────┘  └───────────┘
-                         │             ▲
-                         ▼             │
-                    ┌─────────┐        │
-                    │ Country │        │
-                    └─────────┘        │
-                         │             │
-                         ▼             │
-                    ┌─────────┐        │
-                    │  City   │        │
-                    └─────────┘        │
-                                       │
-                         Trip ─────────┘
+               ┌────────────┐
+               │            │
+               │    User    │
+               │            │
+               └────────────┘
+               │            │
+          ┌─────────────────────────┐
+          │                         │
+          ▼                         ▼
+     ┌──────────┐              ┌──────────┐
+     │   Trip   │◄─────────────│ Comment  │
+     └──────────┘              └──────────┘
+          │
+     ┌──────────┐
+     │ Country  │
+     └──────────┘
+          │
+          ▼
+     ┌──────────┐
+     │   City   │
+     └──────────┘
 ```
 
-## Funcionalidades Principales
+---
 
-- ✅ Creación de perfiles de usuario
-- ✅ Publicación de viajes con fotos y descripciones
-- ✅ Asociación de viajes a países
-- ✅ Sistema de comentarios en viajes
-- ✅ Sistema de amistades entre usuarios
-- 🔜 Mapa interactivo mundial (funcionalidad futura)
+## ✨ Funcionalidades Implementadas
 
-## Tecnologías
+### Autenticación y Seguridad
 
-- **Backend:** FastAPI
-- **Base de datos:** MySQL
-- **ORM:** SQLAlchemy
-- **Validación:** Pydantic
-- **Autenticación:** Passlib
+- ✅ **JWT Authentication** - Tokens con user_id, username y role
+- ✅ **Password Hashing** - Bcrypt con salt automático
+- ✅ **Role-Based Access** - Roles: user, admin, superadmin
+- ✅ **Validación de entrada** - Pydantic schemas con validadores personalizados
 
-## APIs Externas
+### CRUD Completo
 
-### REST Countries API
+- ✅ **Users** - Registro, login, actualización, eliminación
+- ✅ **Trips** - Crear, leer, actualizar, eliminar viajes
+- ✅ **Comments** - Comentarios por viaje y por usuario
+- ✅ **Countries** - Gestión de países
+- ✅ **Cities** - Gestión de ciudades con geolocalización
 
-Utilizada para poblar la base de datos con información de países.
+### Manejo de Errores
 
-- **URL:** https://restcountries.com/
-- **Uso:** Obtener listado completo de países con sus códigos ISO y banderas
-- **Gratuita:** Sí, sin necesidad de API key
-- **Datos obtenidos:** Nombre, código ISO (alpha2), bandera (emoji/URL)
+- ✅ **Errores personalizados** - Códigos y mensajes descriptivos en español
+- ✅ **Validación automática** - Errores de Pydantic formateados
+- ✅ **Errores de BD** - IntegrityError, OperationalError, DataError
+- ✅ **Logging** - Registro de todos los errores
+- ✅ **Respuestas consistentes** - Formato JSON estándar
 
-### GeoNames API
+### Arquitectura
 
-Utilizada para poblar la base de datos con ciudades del mundo.
+- ✅ **Schemas en dos niveles** - Basic (nested) y Out (full response)
+- ✅ **Sin imports circulares** - Forward references con TYPE_CHECKING
+- ✅ **Validaciones en service layer** - Lógica de negocio centralizada
+- ✅ **Variables de entorno** - Credenciales en .env
+- ✅ **Seeding automático** - Datos de prueba al iniciar
 
-- **URL:** http://www.geonames.org/
-- **Uso:** Obtener ciudades por país con coordenadas geográficas
-- **Requiere registro:** Sí (gratuito)
-- **Datos obtenidos:** Nombre de ciudad, coordenadas (latitud, longitud), jerarquía administrativa
+---
 
-## Instalación
+## 🛠️ Tecnologías
 
-### 1. Crear entorno virtual
+| Categoría         | Tecnología       | Versión |
+| ----------------- | ---------------- | ------- |
+| **Framework**     | FastAPI          | Latest  |
+| **Base de Datos** | MySQL            | 8.0+    |
+| **ORM**           | SQLAlchemy       | 2.x     |
+| **Validación**    | Pydantic         | 2.x     |
+| **Auth**          | PyJWT            | Latest  |
+| **Password**      | Bcrypt + Passlib | Latest  |
+| **Env Vars**      | python-dotenv    | Latest  |
+
+---
+
+## 📦 Instalación
+
+### 1. Clonar repositorio
+
+```bash
+git clone <repository-url>
+cd Aurevia_API-v.01
+```
+
+### 2. Crear entorno virtual
 
 ```bash
 python -m venv venv
 ```
 
-### 2. Activar entorno virtual
+### 3. Activar entorno virtual
 
 **Windows:**
 
@@ -215,10 +236,10 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 3. Instalar dependencias
+### 4. Instalar dependencias
 
 ```bash
-# FastAPI y servidor
+# Framework y servidor
 pip install fastapi uvicorn
 
 # Base de datos
@@ -229,14 +250,61 @@ pip install sqlalchemy
 pip install "pydantic[email]"
 pip install passlib
 pip install bcrypt
+pip install pyjwt
 
-# Para consumir APIs externas
+# Utilidades
+pip install python-dotenv
 pip install requests
 ```
 
-## Uso
+### 5. Configurar variables de entorno
 
-### Iniciar el servidor
+Copia `.env.example` a `.env` y configura tus credenciales:
+
+```bash
+cp .env.example .env
+```
+
+Edita `.env`:
+
+```env
+# Database
+MYSQL_USER=root
+MYSQL_PASSWORD=tu_password
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DB=aurevia
+
+# JWT
+SECRET_KEY=tu-clave-secreta-muy-larga-minimo-32-caracteres
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:8100,http://127.0.0.1:8100
+
+# App
+ENVIRONMENT=development
+DEBUG=True
+```
+
+**⚠️ IMPORTANTE:** Genera una SECRET_KEY segura:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### 6. Crear base de datos
+
+```sql
+CREATE DATABASE aurevia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+---
+
+## 🚀 Uso
+
+### Iniciar servidor
 
 **Modo normal:**
 
@@ -247,9 +315,287 @@ uvicorn app.main:app
 **Modo desarrollo (con recarga automática):**
 
 ```bash
-uvicorn main:app --reload
+uvicorn app.main:app --reload
+```
+
+**Especificar puerto:**
+
+```bash
+uvicorn app.main:app --port 8080
 ```
 
 El servidor estará disponible en: `http://localhost:8000`
 
-Documentación API automática: `http://localhost:8000/docs`
+### Documentación API
+
+FastAPI genera documentación interactiva automáticamente:
+
+- **Swagger UI:** `http://localhost:8000/docs`
+- **ReDoc:** `http://localhost:8000/redoc`
+- **OpenAPI Schema:** `http://localhost:8000/openapi.json`
+
+---
+
+## 🔑 Endpoints Principales
+
+### Autenticación (`/api/v1/auth`)
+
+| Método | Endpoint               | Descripción                  | Body                                    |
+| ------ | ---------------------- | ---------------------------- | --------------------------------------- |
+| POST   | `/register`            | Registrar usuario            | `{email, username, password, role?}`    |
+| POST   | `/login`               | Login y obtener JWT          | `{email, password}`                     |
+| GET    | `/`                    | Listar todos los usuarios    | -                                       |
+| GET    | `/id/{user_id}`        | Obtener usuario por ID       | -                                       |
+| GET    | `/email/{email}`       | Obtener usuario por email    | -                                       |
+| GET    | `/username/{username}` | Obtener usuario por username | -                                       |
+| PUT    | `/{user_id}`           | Actualizar usuario           | `{email?, username?, password?, role?}` |
+| DELETE | `/{user_id}`           | Eliminar usuario             | -                                       |
+
+### Viajes (`/api/v1/trip`)
+
+| Método | Endpoint     | Descripción             | Body                                                             |
+| ------ | ------------ | ----------------------- | ---------------------------------------------------------------- |
+| GET    | `/`          | Listar todos los viajes | -                                                                |
+| GET    | `/{trip_id}` | Obtener viaje por ID    | -                                                                |
+| POST   | `/`          | Crear viaje             | `{name, description, start_date, end_date, user_id, country_id}` |
+| PUT    | `/{trip_id}` | Actualizar viaje        | `{name?, description?, start_date?, end_date?, country_id?}`     |
+| DELETE | `/{trip_id}` | Eliminar viaje          | -                                                                |
+
+### Comentarios (`/api/v1/comment`)
+
+| Método | Endpoint          | Descripción                  | Body                          |
+| ------ | ----------------- | ---------------------------- | ----------------------------- |
+| GET    | `/`               | Listar todos los comentarios | -                             |
+| GET    | `/{comment_id}`   | Obtener comentario por ID    | -                             |
+| GET    | `/user/{user_id}` | Comentarios de un usuario    | -                             |
+| GET    | `/trip/{trip_id}` | Comentarios de un viaje      | -                             |
+| POST   | `/`               | Crear comentario             | `{content, user_id, trip_id}` |
+| PUT    | `/{comment_id}`   | Actualizar comentario        | `{content?}`                  |
+| DELETE | `/{comment_id}`   | Eliminar comentario          | -                             |
+
+### Países (`/api/v1/country`)
+
+| Método | Endpoint               | Descripción             | Body      |
+| ------ | ---------------------- | ----------------------- | --------- |
+| GET    | `/`                    | Listar todos los países | -         |
+| GET    | `/id/{country_id}`     | Obtener país por ID     | -         |
+| GET    | `/name/{country_name}` | Obtener país por nombre | -         |
+| POST   | `/`                    | Crear país              | `{name}`  |
+| PUT    | `/{country_id}`        | Actualizar país         | `{name?}` |
+| DELETE | `/{country_id}`        | Eliminar país           | -         |
+
+### Ciudades (`/api/v1/city`)
+
+| Método | Endpoint            | Descripción               | Body                                          |
+| ------ | ------------------- | ------------------------- | --------------------------------------------- |
+| GET    | `/`                 | Listar todas las ciudades | -                                             |
+| GET    | `/id/{city_id}`     | Obtener ciudad por ID     | -                                             |
+| GET    | `/name/{city_name}` | Obtener ciudad por nombre | -                                             |
+| POST   | `/`                 | Crear ciudad              | `{name, latitude?, longitude?, country_id}`   |
+| PUT    | `/{city_id}`        | Actualizar ciudad         | `{name?, latitude?, longitude?, country_id?}` |
+| DELETE | `/{city_id}`        | Eliminar ciudad           | -                                             |
+
+---
+
+## 🔐 Autenticación JWT
+
+### Registro
+
+```bash
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "username": "johndoe",
+  "password": "securepassword123",
+  "role": "user"  // Opcional, default: "user"
+}
+```
+
+### Login
+
+```bash
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Respuesta:**
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "username": "johndoe",
+    "role": "user",
+    "trips": [],
+    "comments": []
+  }
+}
+```
+
+### Usar el Token
+
+```bash
+GET /api/v1/trip/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Decodificar Token
+
+El token JWT contiene:
+
+```json
+{
+  "user_id": 1,
+  "username": "johndoe",
+  "role": "user",
+  "exp": 1733425200
+}
+```
+
+Puedes decodificarlo en: https://jwt.io
+
+---
+
+## 🗃️ Seeding
+
+La base de datos se puebla automáticamente al iniciar el servidor (si está activado en `main.py`):
+
+- **5 usuarios** (1 admin, 4 users) - Password: `password123`
+- **5 países** (Spain, France, Italy, Japan, USA)
+- **10 ciudades** (2 por país con coordenadas aleatorias)
+- **10 viajes** (2 por usuario)
+- **30 comentarios** (3 por viaje)
+
+Para desactivar el seeding, comenta las líneas en `app/main.py`:
+
+```python
+# try:
+#     db = SessionLocal()
+#     seed_db(db)
+# finally:
+#     db.close()
+```
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+Aurevia_API-v.01/
+├── app/
+│   ├── api/
+│   │   └── v1/
+│   │       ├── __init__.py
+│   │       └── endpoints/
+│   │           ├── user.py
+│   │           ├── trip.py
+│   │           ├── comment.py
+│   │           ├── country.py
+│   │           └── city.py
+│   ├── auth/
+│   │   ├── deps.py         # Dependencias (get_db)
+│   │   ├── jwt.py          # JWT utilities
+│   │   └── security.py     # Password hashing
+│   ├── core/
+│   │   ├── config.py       # Settings (desde .env)
+│   │   └── exceptions.py   # Error handlers
+│   ├── db/
+│   │   ├── base.py         # Base class
+│   │   ├── session.py      # DB session
+│   │   ├── seed.py         # Seeding data
+│   │   └── models/
+│   │       ├── user.py
+│   │       ├── trip.py
+│   │       ├── comment.py
+│   │       ├── country.py
+│   │       └── city.py
+│   ├── schemas/
+│   │   ├── user.py         # Pydantic models
+│   │   ├── trip.py
+│   │   ├── comment.py
+│   │   ├── country.py
+│   │   └── city.py
+│   ├── service/
+│   │   ├── user.py         # Business logic
+│   │   ├── trip.py
+│   │   ├── comment.py
+│   │   ├── country.py
+│   │   └── city.py
+│   └── main.py             # FastAPI app
+├── .env                    # Environment variables (NOT in git)
+├── .env.example            # Template
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 🐛 Manejo de Errores
+
+Todos los errores retornan un formato consistente:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Mensaje descriptivo en español",
+    "type": "error_type"
+  },
+  "details": {
+    // Detalles específicos del error
+  },
+  "path": "/api/v1/endpoint"
+}
+```
+
+### Códigos de Error Comunes
+
+| Código                | Descripción                     |
+| --------------------- | ------------------------------- |
+| `VALIDATION_ERROR`    | Error de validación de Pydantic |
+| `USER_NOT_FOUND`      | Usuario no encontrado           |
+| `EMAIL_DUPLICATED`    | Email ya registrado             |
+| `USERNAME_DUPLICATED` | Username ya registrado          |
+| `INVALID_PASSWORD`    | Contraseña incorrecta           |
+| `EMAIL_NOT_FOUND`     | Email no existe                 |
+| `TRIP_NOT_FOUND`      | Viaje no encontrado             |
+| `COUNTRY_NOT_FOUND`   | País no encontrado              |
+| `CITY_NOT_FOUND`      | Ciudad no encontrada            |
+| `COMMENT_NOT_FOUND`   | Comentario no encontrado        |
+
+---
+
+## 🔮 Funcionalidades Futuras
+
+- 🔜 Middleware de autenticación JWT para endpoints protegidos
+- 🔜 Refresh tokens
+- 🔜 Subida de fotos de viajes (S3/Cloudinary)
+- 🔜 Sistema de likes en viajes
+- 🔜 Búsqueda y filtrado avanzado con IA
+- 🔜 Paginación en listados
+- 🔜 Rate limiting
+- 🔜 Tests unitarios e integración
+- 🔜 Docker, Docker Compose y Kubernetes
+- 🔜 CI/CD Pipeline
+
+---
+
+## 📄 Licencia
+
+Este proyecto es privado y de uso educativo.
+
+---
+
+## 👥 Autor
+
+Desarrollado como proyecto de aprendizaje de FastAPI y arquitectura de APIs REST.
