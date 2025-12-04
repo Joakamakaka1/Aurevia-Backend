@@ -29,6 +29,16 @@ app = FastAPI(
 # Crear tablas
 Base.metadata.create_all(bind=engine)
 
+# Seed Database (Development/Simulation)
+from app.db.seed import seed_db
+from app.db.session import SessionLocal
+
+try:
+    db = SessionLocal()
+    seed_db(db)
+finally:
+    db.close()
+
 # Incluir routers
 app.include_router(api_router, prefix="/api")
 
