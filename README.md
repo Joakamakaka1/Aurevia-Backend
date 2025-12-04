@@ -195,15 +195,15 @@ Comentario en un viaje específico.
 
 ## 🛠️ Tecnologías
 
-| Categoría         | Tecnología       | Versión |
-| ----------------- | ---------------- | ------- |
-| **Framework**     | FastAPI          | Latest  |
-| **Base de Datos** | MySQL            | 8.0+    |
-| **ORM**           | SQLAlchemy       | 2.x     |
-| **Validación**    | Pydantic         | 2.x     |
-| **Auth**          | PyJWT            | Latest  |
-| **Password**      | Bcrypt + Passlib | Latest  |
-| **Env Vars**      | python-dotenv    | Latest  |
+| Categoría         | Tecnología       | Versión       |
+| ----------------- | ---------------- | ------------- |
+| **Framework**     | FastAPI          | Latest        |
+| **Base de Datos** | MySQL            | 8.0+          |
+| **ORM**           | SQLAlchemy       | 2.x           |
+| **Validación**    | Pydantic         | 2.x           |
+| **Auth**          | PyJWT            | 2.10.1        |
+| **Password**      | Bcrypt + Passlib | 3.2.2 - 1.7.4 |
+| **Env Vars**      | python-dotenv    | 1.2.1         |
 
 ---
 
