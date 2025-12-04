@@ -1,32 +1,38 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, status
 from typing import List
-from sqlalchemy.orm import Session
-from app.auth.deps import get_db
-from app.service import trip as crud_trip
+from app.service.trip import TripService
 from app.schemas.trip import *
 from app.core.exceptions import AppError
+from app.api.deps import get_trip_service
 
 router = APIRouter(prefix="/v1/trip", tags=["Trip"])
 
 @router.get("/", response_model=List[TripOut], status_code=status.HTTP_200_OK)
-def get_all_trips(db: Session = Depends(get_db)):
-    return crud_trip.get_all_trips(db)
+def get_all_trips(service: TripService = Depends(get_trip_service)):
+    return service.get_all()
 
 @router.get("/name/{name}", response_model=TripOut, status_code=status.HTTP_200_OK)
-def get_trip_by_name(name: str, db: Session = Depends(get_db)):
-    trip = crud_trip.get_trip_by_name(db, name)
+def get_trip_by_name(name: str, service: TripService = Depends(get_trip_service)):
+    trip = service.get_by_name(name)
+    if not trip:
+        raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
+    return trip
+
+@router.get("/id/{trip_id}", response_model=TripOut, status_code=status.HTTP_200_OK)
+def get_trip_by_id(trip_id: int, service: TripService = Depends(get_trip_service)):
+    trip = service.get_by_id(trip_id)
     if not trip:
         raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
     return trip
 
 @router.post("/", response_model=TripOut, status_code=status.HTTP_201_CREATED)
-def create_trip(payload: TripCreate, db: Session = Depends(get_db)):
-    return crud_trip.create(db, trip_in=payload)
+def create_trip(payload: TripCreate, service: TripService = Depends(get_trip_service)):
+    return service.create(trip_in=payload)
 
 @router.put("/id/{trip_id}", response_model=TripOut, status_code=status.HTTP_200_OK)
-def update_trip(trip_id: int, payload: TripUpdate, db: Session = Depends(get_db)):
-    return crud_trip.update(db, trip_id=trip_id, trip_in=payload)
+def update_trip(trip_id: int, payload: TripUpdate, service: TripService = Depends(get_trip_service)):
+    return service.update(trip_id=trip_id, trip_in=payload)
 
 @router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trip(trip_id: int, db: Session = Depends(get_db)):
-    crud_trip.delete(db, id=id)
+def delete_trip(trip_id: int, service: TripService = Depends(get_trip_service)):
+    service.delete(trip_id=trip_id)

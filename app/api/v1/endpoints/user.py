@@ -1,43 +1,41 @@
 from fastapi import APIRouter, Depends, status
 from typing import List
-from sqlalchemy.orm import Session
-from app.auth.deps import get_db
 from app.auth.jwt import create_access_token
-from app.service import user as crud_user
+from app.service.user import UserService
 from app.schemas.user import *
 from app.core.exceptions import AppError
+from app.api.deps import get_user_service
 
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
 @router.get("/", response_model=List[UserOut], status_code=status.HTTP_200_OK)
-def get_all_users(db: Session = Depends(get_db)):
-    return crud_user.get_all_users(db)
+def get_all_users(service: UserService = Depends(get_user_service)):
+    return service.get_all()
 
 @router.get("/username/{username}", response_model=UserOut, status_code=status.HTTP_200_OK)
-def get_user_by_username(username: str, db: Session = Depends(get_db)):
-    user = crud_user.get_by_username(db, username=username.strip())
+def get_user_by_username(username: str, service: UserService = Depends(get_user_service)):
+    user = service.get_by_username(username=username.strip())
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.get("/email/{email}", response_model=UserOut, status_code=status.HTTP_200_OK)
-def get_user_by_email(email: str, db: Session = Depends(get_db)):
-    user = crud_user.get_by_email(db, email=email.strip())
+def get_user_by_email(email: str, service: UserService = Depends(get_user_service)):
+    user = service.get_by_email(email=email.strip())
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.get("/id/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
-def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
-    user = crud_user.get_user_by_id(db, user_id=user_id)
+def get_user_by_id(user_id: int, service: UserService = Depends(get_user_service)):
+    user = service.get_by_id(user_id=user_id)
     if not user:
         raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
     return user
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def register(payload: UserCreate, db: Session = Depends(get_db)):
-    return crud_user.create(
-        db, 
+def register(payload: UserCreate, service: UserService = Depends(get_user_service)):
+    return service.create(
         email=payload.email, 
         username=payload.username, 
         password=payload.password,
@@ -45,9 +43,9 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
-def login(payload: UserLogin, db: Session = Depends(get_db)):
+def login(payload: UserLogin, service: UserService = Depends(get_user_service)):
     # Autenticar usuario
-    user = crud_user.authenticate(db, email=payload.email, password=payload.password)
+    user = service.authenticate(email=payload.email, password=payload.password)
     
     # Crear token JWT con información del usuario
     access_token = create_access_token(
@@ -66,11 +64,9 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     }
 
 @router.put("/{user_id}", response_model=UserOut, status_code=status.HTTP_200_OK)
-def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
-    return crud_user.update_user_by_id(db, user_id=user_id, user_data=payload.model_dump(exclude_unset=True))
+def update_user(user_id: int, payload: UserUpdate, service: UserService = Depends(get_user_service)):
+    return service.update(user_id=user_id, user_data=payload.model_dump(exclude_unset=True))
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    crud_user.delete_user_by_id(db, user_id=user_id)
-
-
+def delete_user(user_id: int, service: UserService = Depends(get_user_service)):
+    service.delete(user_id=user_id)

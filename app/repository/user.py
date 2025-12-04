@@ -42,5 +42,19 @@ class UserRepository:
         self.db.add(user)
         return user
 
+        
+    def update(self, user_id: int, user_data: dict) -> User:
+        user = self.get_by_id(user_id)
+        if not user:
+            raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
+        
+        # Actualizar campos
+        for key, value in user_data.items():
+            if value is not None:
+                setattr(user, key, value)
+        
+        # El commit lo hace el decorador
+        return user
+
     def delete(self, user: User) -> None:
         self.db.delete(user)
