@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from app.db.models.trip import Trip
 from app.core.exceptions import AppError
 from app.schemas.trip import TripCreate, TripUpdate
+from app.service.user import get_user_by_id
+from app.service.country import get_country_by_id
 
 def get_all_trips(db: Session) -> list[Trip]:
     return db.query(Trip).all()
@@ -41,6 +43,7 @@ def get_trip_by_start_date_and_user(db: Session, start_date: str, user_id: int) 
     """
     return db.query(Trip).filter(Trip.start_date == start_date, Trip.user_id == user_id).first()
 
+# Metodos auxiliares
 def validate_trip_dates(start_date: str, end_date: str) -> None:
     """Valida que start_date sea anterior a end_date"""
     if start_date > end_date:
@@ -61,61 +64,85 @@ def validate_trip_description_length(description: str) -> None:
         raise AppError(400, "DESCRIPTION_TOO_LONG", "La descripción no puede tener más de 500 caracteres")
 
 def create(db: Session, trip_in: TripCreate) -> Trip:
-    # Validar fechas primero
-    validate_trip_dates(trip_in.start_date, trip_in.end_date)
+    try:
+        # Validar fechas primero
+        validate_trip_dates(trip_in.start_date, trip_in.end_date)
     
-    # Validar longitud de campos (también validado en schema, pero mantenemos por si acaso)
-    validate_trip_name_length(trip_in.name)
-    validate_trip_description_length(trip_in.description)
+        # Validar longitud de campos (también validado en schema, pero mantenemos por si acaso)
+        validate_trip_name_length(trip_in.name)
+        validate_trip_description_length(trip_in.description)
     
-    # Validar duplicados
-    if get_trip_by_start_date_and_user(db, trip_in.start_date, trip_in.user_id):
-        raise AppError(400, "TRIP_ALREADY_EXISTS", "El viaje ya existe")
+        # VALIDAR FOREIGN KEYS: Verificar que user_id existe
+        if not get_user_by_id(db, trip_in.user_id):
+            raise AppError(404, "USER_NOT_FOUND", f"El usuario con ID {trip_in.user_id} no existe")
     
-    # Crear trip después de todas las validaciones
-    trip = Trip(**trip_in.model_dump())
-    db.add(trip)
-    db.commit()
-    db.refresh(trip)
-    return trip
+        # VALIDAR FOREIGN KEYS: Verificar que country_id existe
+        if not get_country_by_id(db, trip_in.country_id):
+            raise AppError(404, "COUNTRY_NOT_FOUND", f"El país con ID {trip_in.country_id} no existe")
+    
+        # Validar duplicados
+        if get_trip_by_start_date_and_user(db, trip_in.start_date, trip_in.user_id):
+            raise AppError(400, "TRIP_ALREADY_EXISTS", "El viaje ya existe")
+    
+        # Crear trip después de todas las validaciones
+        trip = Trip(**trip_in.model_dump())
+        db.add(trip)
+        db.commit()
+        db.refresh(trip)
+        return trip
+    
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
 
 def update(db: Session, trip_id: int, trip_in: TripUpdate) -> Trip:
-    # Reutilizar get_trip_by_id
-    trip = get_trip_by_id(db, trip_id)
-    if not trip:
-        raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
+    try:
+        # Reutilizar get_trip_by_id
+        trip = get_trip_by_id(db, trip_id)
+        if not trip:
+            raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
     
-    # Convertir a dict solo con campos no-None
-    trip_data = trip_in.model_dump(exclude_unset=True)
+        # Convertir a dict solo con campos no-None
+        trip_data = trip_in.model_dump(exclude_unset=True)
     
-    # Validar fechas si se están actualizando (considerar valores actuales si no se envían)
-    start_date = trip_data.get('start_date', trip.start_date)
-    end_date = trip_data.get('end_date', trip.end_date)
-    validate_trip_dates(start_date, end_date)
+        # Validar fechas si se están actualizando (considerar valores actuales si no se envían)
+        start_date = trip_data.get('start_date', trip.start_date)
+        end_date = trip_data.get('end_date', trip.end_date)
+        validate_trip_dates(start_date, end_date)
     
-    # Validar longitud de name si se está actualizando
-    if 'name' in trip_data and trip_data['name'] is not None:
-        validate_trip_name_length(trip_data['name'])
+        # Validar longitud de name si se está actualizando
+        if 'name' in trip_data and trip_data['name'] is not None:
+            validate_trip_name_length(trip_data['name'])
     
-    # Validar longitud de description si se está actualizando
-    if 'description' in trip_data and trip_data['description'] is not None:
-        validate_trip_description_length(trip_data['description'])
+        # Validar longitud de description si se está actualizando
+        if 'description' in trip_data and trip_data['description'] is not None:
+            validate_trip_description_length(trip_data['description'])
     
-    # Actualizar solo campos no-None
-    for key, value in trip_data.items():
-        if value is not None:
-            setattr(trip, key, value)
+        # Actualizar solo campos no-None
+        for key, value in trip_data.items():
+            if value is not None:
+                setattr(trip, key, value)
     
-    db.commit()
-    db.refresh(trip)
-    return trip
+        db.commit()
+        db.refresh(trip)
+        return trip
+    
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
 
 def delete(db: Session, *, id: int) -> None:
-    # Reutilizar get_trip_by_id
-    trip = get_trip_by_id(db, id)
-    if not trip:
-        raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
-    
-    db.delete(trip)
-    db.commit()
+    try:
+        # Reutilizar get_trip_by_id
+        trip = get_trip_by_id(db, id)
+        if not trip:
+            raise AppError(404, "TRIP_NOT_FOUND", "El viaje no existe")
+        
+        db.delete(trip)
+        db.commit()
+        return None
+
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
 

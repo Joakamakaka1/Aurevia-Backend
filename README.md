@@ -44,8 +44,8 @@ Viaje realizado por un usuario a un país.
 - `id` (PK, Integer, Auto-increment)
 - `name` (String 255, Requerido)
 - `description` (String 255, Requerido)
-- `start_date` (String 255, Requerido) - Formato: YYYY-MM-DD
-- `end_date` (String 255, Requerido) - Formato: YYYY-MM-DD
+- `start_date` (Date, Requerido)
+- `end_date` (Date, Requerido)
 - `user_id` (FK → User, Requerido)
 - `country_id` (FK → Country, Requerido)
 

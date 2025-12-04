@@ -8,10 +8,23 @@ load_dotenv()
 class Settings:
     """Configuración de la aplicación desde variables de entorno"""
     
+    # Application Settings (needed first for validation)
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
+    
     # JWT Settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "fallback-secret-key-only-for-development")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+    
+    def __post_init__(self):
+        """Validar configuración después de inicialización"""
+        # SEGURIDAD: No permitir SECRET_KEY por defecto en producción
+        if self.ENVIRONMENT != "development" and self.SECRET_KEY == "fallback-secret-key-only-for-development":
+            raise ValueError(
+                "SECRET_KEY must be set in production environment. "
+                "Generate a secure key with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
     
     # Database
     MYSQL_USER: str = os.getenv("MYSQL_USER", "root")

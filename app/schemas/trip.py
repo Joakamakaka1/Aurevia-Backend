@@ -1,3 +1,4 @@
+from datetime import date
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
 from app.schemas.country import CountryBasic
@@ -12,8 +13,8 @@ class TripBasic(BaseModel):
     id: int
     name: str
     description: str
-    start_date: str
-    end_date: str
+    start_date: date
+    end_date: date
     country: CountryBasic  # Solo info básica del país
     
     model_config = ConfigDict(from_attributes=True)
@@ -25,8 +26,8 @@ class TripBasic(BaseModel):
 class TripBase(BaseModel):
     name: str
     description: str
-    start_date: str
-    end_date: str
+    start_date: date
+    end_date: date
 
 class TripCreate(TripBase):
     user_id: int 
@@ -53,8 +54,8 @@ class TripCreate(TripBase):
 class TripUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     country_id: Optional[int] = None
     
     @field_validator('name')
@@ -77,6 +78,16 @@ class TripUpdate(BaseModel):
                 raise ValueError('La descripción no puede tener más de 500 caracteres')
         return v
 
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def validate_date_format(cls, v: str) -> str:
+        try:
+            # Validar formato YYYY-MM-DD
+            date.fromisoformat(v)
+            return v
+        except ValueError:
+            raise ValueError('La fecha debe estar en formato YYYY-MM-DD')
+
 # ============================================================================
 # SCHEMA DE SALIDA (Out) - Para respuestas principales
 # ============================================================================
@@ -87,8 +98,8 @@ class TripOut(BaseModel):
     user_id: int
     name: str
     description: str
-    start_date: str
-    end_date: str
+    start_date: date
+    end_date: date
     country: CountryBasic  # Info básica del país
     comments: list[CommentBasic] = []  # Lista de comentarios (básicos, sin anidación profunda)
     

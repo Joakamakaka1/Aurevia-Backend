@@ -23,6 +23,7 @@ class UserBase(BaseModel):
     id: int
     email: EmailStr
     username: str
+    role: Optional[Literal["user", "admin", "superadmin"]] = "user"  # Role opcional, por defecto "user"
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -37,6 +38,32 @@ class UserCreate(BaseModel):
             raise ValueError('El nombre de usuario debe tener al menos 3 caracteres')
         if len(v) > 50:
             raise ValueError('El nombre de usuario no puede tener más de 50 caracteres')
+        return v
+
+    @field_validator('email')
+    @classmethod
+    def validate_email_format(cls, v: str) -> str:
+        try:
+            # Validar formato email
+            EmailStr.validate(v)
+            return v
+        except ValueError:
+            raise ValueError('El email debe tener un formato válido')
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('La contraseña debe tener al menos 8 caracteres')
+        if len(v) > 72:  # Límite de bcrypt
+            raise ValueError('La contraseña no puede tener más de 72 caracteres')
+
+        # Opcional: Validar complejidad
+        # if not any(c.isupper() for c in v):
+        #     raise ValueError('La contraseña debe contener al menos una mayúscula')
+        # if not any(c.isdigit() for c in v):
+        #     raise ValueError('La contraseña debe contener al menos un número')
+        
         return v
 
 class UserLogin(BaseModel):

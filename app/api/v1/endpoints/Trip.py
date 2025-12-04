@@ -12,7 +12,7 @@ router = APIRouter(prefix="/v1/trip", tags=["Trip"])
 def get_all_trips(db: Session = Depends(get_db)):
     return crud_trip.get_all_trips(db)
 
-@router.get("/{name}", response_model=TripOut, status_code=status.HTTP_200_OK)
+@router.get("/name/{name}", response_model=TripOut, status_code=status.HTTP_200_OK)
 def get_trip_by_name(name: str, db: Session = Depends(get_db)):
     trip = crud_trip.get_trip_by_name(db, name)
     if not trip:
@@ -23,10 +23,10 @@ def get_trip_by_name(name: str, db: Session = Depends(get_db)):
 def create_trip(payload: TripCreate, db: Session = Depends(get_db)):
     return crud_trip.create(db, trip_in=payload)
 
-@router.put("/{id}", response_model=TripOut, status_code=status.HTTP_200_OK)
-def update_trip(id: int, payload: TripUpdate, db: Session = Depends(get_db)):
-    return crud_trip.update(db, trip_id=id, trip_in=payload)
+@router.put("/id/{trip_id}", response_model=TripOut, status_code=status.HTTP_200_OK)
+def update_trip(trip_id: int, payload: TripUpdate, db: Session = Depends(get_db)):
+    return crud_trip.update(db, trip_id=trip_id, trip_in=payload)
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trip(id: int, db: Session = Depends(get_db)):
+@router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_trip(trip_id: int, db: Session = Depends(get_db)):
     crud_trip.delete(db, id=id)

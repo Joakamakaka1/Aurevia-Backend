@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError, OperationalError, DataError
 
 from app.api.v1 import api_router
@@ -73,6 +72,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,  # Usar configuración desde .env
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+    allow_headers=["Content-Type", "Authorization"],
 )

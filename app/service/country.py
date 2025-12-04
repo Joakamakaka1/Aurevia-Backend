@@ -43,18 +43,23 @@ def create_country(db: Session, country_in: CountryCreate) -> Country:
     - Asignamos el nombre indicado por parámetro a la propiedad name del objeto Country
 
     """
-    # Validar nombre duplicado
-    if get_country_by_name(db, country_in.name):
-        raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
-    
-    # Validar longitud del nombre (también validado en schema, pero mantenemos por si acaso)
-    validate_country_name_length(country_in.name)
-    
-    country = Country(name=country_in.name)
-    db.add(country)
-    db.commit()
-    db.refresh(country)
-    return country
+    try:
+        # Validar nombre duplicado
+        if get_country_by_name(db, country_in.name):
+            raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
+        
+        # Validar longitud del nombre (también validado en schema, pero mantenemos por si acaso)
+        validate_country_name_length(country_in.name)
+        
+        country = Country(name=country_in.name)
+        db.add(country)
+        db.commit()
+        db.refresh(country)
+        return country
+        
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
 
 def update_country(db: Session, country_id: int, country_in: CountryUpdate) -> Country:
     """
@@ -66,31 +71,36 @@ def update_country(db: Session, country_id: int, country_in: CountryUpdate) -> C
     - Si lo encuentra, se actualiza
     
     """
-    # Reutilizar get_country_by_id
-    country = get_country_by_id(db, country_id)
-    if not country: 
-        raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
-    
-    # Convertir a dict solo con campos no-None
-    country_data = country_in.model_dump(exclude_unset=True)
-    
-    # Validar nombre duplicado si se está actualizando (excluyendo el mismo país)
-    if 'name' in country_data and country_data['name'] is not None:
-        existing_country = get_country_by_name(db, country_data['name'])
-        if existing_country and existing_country.id != country_id:
-            raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
+    try:
+        # Reutilizar get_country_by_id
+        country = get_country_by_id(db, country_id)
+        if not country: 
+            raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
         
-        # Validar longitud del nombre
-        validate_country_name_length(country_data['name'])
-    
-    # Actualizar solo campos no-None
-    for key, value in country_data.items():
-        if value is not None:
-            setattr(country, key, value)
-    
-    db.commit()
-    db.refresh(country)
-    return country
+        # Convertir a dict solo con campos no-None
+        country_data = country_in.model_dump(exclude_unset=True)
+        
+        # Validar nombre duplicado si se está actualizando (excluyendo el mismo país)
+        if 'name' in country_data and country_data['name'] is not None:
+            existing_country = get_country_by_name(db, country_data['name'])
+            if existing_country and existing_country.id != country_id:
+                raise AppError(409, "COUNTRY_ALREADY_EXISTS", "El país ya existe")
+            
+            # Validar longitud del nombre
+            validate_country_name_length(country_data['name'])
+        
+        # Actualizar solo campos no-None
+        for key, value in country_data.items():
+            if value is not None:
+                setattr(country, key, value)
+        
+        db.commit()
+        db.refresh(country)
+        return country
+
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
 
 def delete_country(db: Session, country_id: int) -> None:
     """
@@ -102,11 +112,16 @@ def delete_country(db: Session, country_id: int) -> None:
     - Si lo encuentra, se elimina
 
     """
-    # Reutilizar get_country_by_id
-    country = get_country_by_id(db, country_id)
-    if not country:
-        raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
-    
-    db.delete(country)
-    db.commit()
-    return None
+    try:
+        # Reutilizar get_country_by_id
+        country = get_country_by_id(db, country_id)
+        if not country:
+            raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
+        
+        db.delete(country)
+        db.commit()
+        return None
+
+    except Exception as e:
+        db.rollback()
+        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
