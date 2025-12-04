@@ -535,6 +535,10 @@ Aurevia_API-v.01/
 ├── .env                    # Environment variables (NOT in git)
 ├── .env.example            # Template
 ├── .gitignore
+├── .dockerignore
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
 └── README.md
 ```
 
