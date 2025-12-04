@@ -228,6 +228,7 @@ pip install sqlalchemy
 # Validación y seguridad
 pip install "pydantic[email]"
 pip install passlib
+pip install bcrypt
 
 # Para consumir APIs externas
 pip install requests

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import cast
 from app.db.models.user import User
-from app.auth.security import verify_password
+from app.auth.security import verify_password, hash_password
 from app.core.exceptions import AppError
 
 def get_all_users(db: Session) -> list[User]:
@@ -31,8 +31,11 @@ def create(db: Session, *, email: str, username: str, password: str) -> User:
     if len(username) > 50:
         raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
     
+    # HASHEAR LA CONTRASEÑA ANTES DE GUARDARLA
+    hashed_pwd = hash_password(password)
+    
     # Crear usuario después de todas las validaciones
-    user = User(email=email, username=username, hashed_password=password)
+    user = User(email=email, username=username, hashed_password=hashed_pwd)
 
     db.add(user)
     db.commit()
@@ -44,6 +47,7 @@ def authenticate(db: Session, *, email: str, password: str) -> User:
     if not user:
         raise AppError(404, "EMAIL_NOT_FOUND", "El email no existe")
 
+    # VERIFICAR CONTRASEÑA HASHEADA
     if not verify_password(password, cast(str, user.hashed_password)):
         raise AppError(400, "INVALID_PASSWORD", "La contraseña no es correcta")
     return user
@@ -72,6 +76,14 @@ def update_user_by_id(db: Session, user_id: int, user_data: dict) -> User:
             raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
         if len(username) > 50:
             raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
+    
+    # SI SE ESTÁ ACTUALIZANDO LA CONTRASEÑA, HASHEARLA PRIMERO
+    if 'password' in user_data and user_data['password'] is not None:
+        # Hashear y guardar con el nombre correcto del campo en la BD
+        hashed = hash_password(user_data['password'])
+        user_data['hashed_password'] = hashed
+        # Eliminar 'password' del dict para no intentar asignar un campo que no existe en el modelo
+        del user_data['password']
 
     # Actualizar solo los campos que no son None
     for key, value in user_data.items():

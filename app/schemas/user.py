@@ -27,7 +27,7 @@ class UserBase(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     username: str
-    hashed_password: str
+    password: str  # El cliente envía la contraseña en texto plano, se hashea en el servidor
     
     @field_validator('username')
     @classmethod
@@ -40,12 +40,12 @@ class UserCreate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    hashed_password: str
+    password: str  # El cliente envía la contraseña en texto plano
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
-    hashed_password: Optional[str] = None
+    password: Optional[str] = None  # El cliente envía la contraseña en texto plano
     
     @field_validator('username')
     @classmethod
