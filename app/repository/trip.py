@@ -4,6 +4,12 @@ from app.schemas.trip import TripCreate, TripUpdate
 from typing import List, Optional
 
 class TripRepository:
+    '''
+    Repositorio de Trips - Capa de acceso a datos.
+    
+    Todas las consultas usan joinedload para cargar country y comments
+    de forma eficiente (eager loading) y evitar el problema N+1.
+    '''
     def __init__(self, db: Session):
         self.db = db
 

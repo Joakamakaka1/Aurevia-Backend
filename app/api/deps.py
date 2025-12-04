@@ -1,3 +1,10 @@
+'''
+Dependencias para inyección de servicios en endpoints.
+
+Cada función crea una instancia del servicio con su sesión de BD.
+Se usan como dependencias de FastAPI con Depends().
+'''
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.auth.deps import get_db

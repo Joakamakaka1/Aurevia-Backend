@@ -4,6 +4,12 @@ from app.schemas.user import UserCreate
 from typing import List, Optional
 
 class UserRepository:
+    '''
+    Repositorio de usuarios - Capa de acceso a datos.
+    
+    Todas las consultas usan joinedload para cargar trips y comments
+    de forma eficiente (eager loading) y evitar el problema N+1.
+    '''
     def __init__(self, db: Session):
         self.db = db
 
@@ -39,6 +45,7 @@ class UserRepository:
         )
 
     def create(self, user: User) -> User:
+        # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(user)
         return user
 

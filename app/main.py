@@ -1,3 +1,14 @@
+'''
+Aurevia API - Aplicación Principal
+
+Configuración de la aplicación FastAPI:
+- Creación de tablas en base de datos
+- Seeding de datos iniciales (solo si la BD está vacía)
+- Registro de routers de API
+- Configuración de exception handlers (orden importante)
+- Configuración de CORS
+'''
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError, OperationalError, DataError
@@ -26,10 +37,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Crear tablas
+# Crear tablas automáticamente
 Base.metadata.create_all(bind=engine)
 
-# Seed Database (Development/Simulation)
+# ============================================================================
+# SEED DATABASE (Development/Testing)
+# Solo se ejecuta si la base de datos está vacía
+# ============================================================================
 from app.db.seed import seed_db
 from app.db.session import SessionLocal
 
@@ -37,13 +51,14 @@ try:
     db = SessionLocal()
     seed_db(db)
 finally:
-    db.close()
+    db.close()  # Siempre cerrar la sesión
 
-# Incluir routers
+# Incluir routers de API
 app.include_router(api_router, prefix="/api")
 
 # ============================================================================
-# MANEJADORES DE EXCEPCIONES (en orden de prioridad)
+# MANEJADORES DE EXCEPCIONES
+# IMPORTANTE: El orden importa - los más específicos primero
 # ============================================================================
 
 # Errores personalizados de la aplicación

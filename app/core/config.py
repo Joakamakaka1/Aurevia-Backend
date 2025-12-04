@@ -1,3 +1,16 @@
+'''
+Configuración de la aplicación Aurevia API
+
+Este módulo centraliza todas las configuraciones de la aplicación,
+cargadas desde variables de entorno (.env file).
+
+Incluye:
+- Configuración de JWT (SECRET_KEY, algoritmo, expiración)
+- Configuración de base de datos MySQL
+- Configuración de CORS
+- Variables de entorno (DEBUG, ENVIRONMENT)
+'''
+
 import os
 from typing import Optional
 from dotenv import load_dotenv
@@ -33,14 +46,22 @@ class Settings:
     MYSQL_PORT: str = os.getenv("MYSQL_PORT", "3306")
     MYSQL_DB: str = os.getenv("MYSQL_DB", "aurevia")
     
-    # Construir DATABASE_URL
     @property
     def database_url(self) -> str:
+        '''
+        Construye la URL de conexión a MySQL dinámicamente.
+        Formato: mysql+mysqlconnector://usuario:password@host:puerto/database
+        '''
         return f"mysql+mysqlconnector://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DB}"
     
     # CORS
     @property
     def allowed_origins(self) -> list[str]:
+        '''
+        Parsea los orígenes permitidos para CORS desde variable de entorno.
+        Formato en .env: "http://localhost:8100,http://127.0.0.1:8100"
+        Retorna una lista de URLs permitidas.
+        '''
         origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8100,http://127.0.0.1:8100")
         return [origin.strip() for origin in origins.split(",")]
     

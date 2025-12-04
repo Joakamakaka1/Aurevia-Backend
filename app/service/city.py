@@ -8,6 +8,14 @@ from app.core.decorators import transactional
 from app.repository.city import CityRepository
 
 class CityService:
+
+    '''
+    Servicio de ciudades. 
+    
+    Responsabilidades:
+    - Valida duplicados de nombre.
+    '''
+    
     def __init__(self, db: Session):
         self.db = db
         self.repo = CityRepository(db)

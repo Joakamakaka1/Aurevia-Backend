@@ -8,16 +8,24 @@ from app.db.models.trip import Trip
 from app.db.models.comment import Comment
 from app.auth.security import hash_password
 
-# Helper to generate random strings
 def random_string(length=10):
+    '''Genera strings aleatorios para nombres de prueba.'''
     letters = string.ascii_letters
     return ''.join(random.choice(letters) for i in range(length))
 
 def seed_db(db: Session):
-    """
-    Seed the database with initial data only if it's empty.
-    Checks if there are existing users before seeding.
-    """
+    '''
+    Puebla la base de datos con datos de prueba SOLO si está vacía.
+    
+    Verifica la existencia de usuarios y países antes de insertar.
+    Esto evita duplicar datos en cada reinicio de la aplicación.
+    
+    Datos generados:
+    - 5 usuarios (1 admin, 4 regulares) con password: 'password123'
+    - 5 países con 2 ciudades cada uno
+    - 2 viajes por usuario
+    - 3 comentarios por viaje
+    '''
     print("----- CHECKING DATABASE STATUS -----")
     
     # Verificar si ya existen datos en la base de datos

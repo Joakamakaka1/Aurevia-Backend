@@ -16,6 +16,7 @@ class CityRepository:
         return self.db.query(City).filter(City.name == name).first()
 
     def create(self, city: City) -> City:
+        # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(city)
         return city
 

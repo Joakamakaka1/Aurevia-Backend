@@ -8,6 +8,15 @@ from app.core.decorators import transactional
 from app.repository.user import UserRepository
 
 class UserService:
+    '''
+    Servicio que maneja la lógica de negocio de usuarios.
+    
+    Responsabilidades:
+    - Validación de duplicados (email, username)
+    - Hasheo y verificación de contraseñas
+    - Autenticación de usuarios
+    - CRUD con validaciones de negocio
+    '''
     def __init__(self, db: Session):
         self.db = db
         self.repo = UserRepository(db)
@@ -26,6 +35,15 @@ class UserService:
 
     @transactional
     def create(self, *, email: str, username: str, password: str, role: str = "user") -> User:
+        '''
+        Crea un nuevo usuario validando duplicados y hasheando la contraseña.
+        
+        Validaciones:
+        1. Verifica que el email no esté registrado
+        2. Verifica que el username no esté en uso
+        3. Hashea la contraseña con bcrypt
+        4. Crea el usuario en la base de datos
+        '''
         # Validar duplicados
         if self.repo.get_by_email(email):
             raise AppError(409, ErrorCode.EMAIL_DUPLICATED, "El email ya está registrado")
@@ -41,6 +59,14 @@ class UserService:
         return self.repo.create(user)
 
     def authenticate(self, *, email: str, password: str) -> User:
+        '''
+        Autentica a un usuario verificando email y contraseña.
+        
+        Proceso:
+        1. Busca el usuario por email
+        2. Verifica que la contraseña coincida con el hash almacenado
+        3. Retorna el usuario si la autenticación es exitosa
+        '''
         try:
             user = self.repo.get_by_email(email)
             if not user:
@@ -57,6 +83,10 @@ class UserService:
 
     @transactional
     def update(self, user_id: int, user_data: dict) -> User:
+        '''
+        Actualiza un usuario validando duplicados en email y username.
+        Si se actualiza la contraseña, la hashea automáticamente.
+        '''
         user = self.repo.get_by_id(user_id)
         if not user:
             raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")

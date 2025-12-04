@@ -10,6 +10,13 @@ from app.repository.user import UserRepository
 from app.repository.trip import TripRepository
 
 class CommentService:
+    '''
+    Servicio que maneja la lógica de negocio de comentarios.
+    
+    Responsabilidades:
+    - Validación de longitud del contenido (5-200 caracteres)
+    - Validación de integridad referencial (user_id, trip_id)
+    '''
     def __init__(self, db: Session):
         self.db = db
         self.repo = CommentRepository(db)
@@ -37,6 +44,11 @@ class CommentService:
 
     @transactional
     def create(self, comment_in: CommentCreate) -> Comment:
+        '''
+        Crea un nuevo comentario validando:
+        1. Longitud del contenido (5-200 caracteres)
+        2. Existencia del user_id y trip_id en la BD
+        '''
         # Validar longitud del contenido
         self.validate_comment_length(comment_in.content)
         

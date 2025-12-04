@@ -16,6 +16,7 @@ class CountryRepository:
         return self.db.query(Country).filter(Country.name == name).first()
 
     def create(self, country: Country) -> Country:
+        # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(country)
         return country
 

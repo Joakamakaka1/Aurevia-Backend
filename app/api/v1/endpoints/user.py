@@ -35,6 +35,13 @@ def get_user_by_id(user_id: int, service: UserService = Depends(get_user_service
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, service: UserService = Depends(get_user_service)):
+    '''
+    Registra un nuevo usuario.
+    
+    Validaciones automáticas en UserService:
+    - Email y username únicos
+    - Contraseña hasheada con bcrypt
+    '''
     return service.create(
         email=payload.email, 
         username=payload.username, 
@@ -44,6 +51,14 @@ def register(payload: UserCreate, service: UserService = Depends(get_user_servic
 
 @router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
 def login(payload: UserLogin, service: UserService = Depends(get_user_service)):
+    '''
+    Autentica un usuario y genera un token JWT.
+    
+    Proceso:
+    1. Verifica email y contraseña
+    2. Genera token JWT con datos del usuario (user_id, username, role)
+    3. Retorna el token y datos del usuario
+    '''
     # Autenticar usuario
     user = service.authenticate(email=payload.email, password=payload.password)
     

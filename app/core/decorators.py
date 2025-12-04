@@ -4,10 +4,21 @@ from app.core.exceptions import AppError
 from app.core.constants import ErrorCode
 
 def transactional(func):
-    """
+    '''
     Decorador para manejar transacciones de base de datos automáticamente.
-    Realiza commit si todo va bien, y rollback si ocurre una excepción.
-    """
+    
+    Funcionalidad:
+    1. Busca automáticamente el objeto Session (db) en los argumentos de la función
+    2. Ejecuta la función decorada
+    3. Si todo va bien: hace commit y refresh del resultado
+    4. Si hay error: hace rollback y re-lanza la excepción
+    
+    Uso:
+        @transactional
+        def create_user(self, user_data):
+            # código que modifica la BD
+            return user
+    '''
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Buscar el objeto db (Session) en los argumentos

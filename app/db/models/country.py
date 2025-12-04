@@ -1,7 +1,6 @@
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
-from app.db.models.trip import Trip
 
 class Country(Base):
     __tablename__ = "country"

@@ -19,6 +19,7 @@ class CommentRepository:
         return self.db.query(Comment).filter(Comment.user_id == user_id).all()
 
     def create(self, comment: Comment) -> Comment:
+        # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(comment)
         return comment
 

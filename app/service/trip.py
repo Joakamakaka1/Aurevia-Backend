@@ -10,6 +10,17 @@ from app.repository.user import UserRepository
 from app.repository.country import CountryRepository
 
 class TripService:
+
+    '''
+    Servicio que maneja la lógica de negocio de viajes.
+    
+    Responsabilidades:
+    - Validación de fechas (start_date < end_date)
+    - Validación de integridad referencial (user_id, country_id)
+    - Validación de unicidad (un viaje por usuario por fecha de inicio)
+    - CRUD con validaciones en múltiples capas
+    '''
+    
     def __init__(self, db: Session):
         self.db = db
         self.repo = TripRepository(db)
@@ -32,6 +43,14 @@ class TripService:
 
     @transactional
     def create(self, trip_in: TripCreate) -> Trip:
+        '''
+        Crea un nuevo viaje aplicando validaciones en 4 etapas:
+        
+        1. Validaciones de Negocio: Fechas lógicas (inicio < fin)
+        2. Validaciones de Integridad: Existencia de user_id y country_id
+        3. Validaciones de Unicidad: No duplicar viajes en misma fecha
+        4. Creación: Persistir en base de datos
+        '''
         # 1. Validaciones de Negocio (Fechas)
         self.validate_trip_dates(trip_in.start_date, trip_in.end_date)
         
