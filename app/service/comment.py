@@ -2,82 +2,75 @@ from sqlalchemy.orm import Session
 from app.db.models.comment import Comment
 from app.schemas.comment import CommentCreate, CommentUpdate
 from app.core.exceptions import AppError
-
+from app.core.constants import ErrorCode
+from app.core.decorators import transactional
+from app.repository.comment import CommentRepository
+from app.service.user import get_user_by_id
+from app.service.trip import get_trip_by_id
 
 def get_all_comments(db: Session) -> list[Comment]:
-    return db.query(Comment).all()
+    repo = CommentRepository(db)
+    return repo.get_all()
 
 def get_comment_by_id(db: Session, id: int) -> Comment | None:
-    return db.query(Comment).filter(Comment.id == id).first()
+    repo = CommentRepository(db)
+    return repo.get_by_id(id)
 
 def get_comments_by_trip_id(db: Session, trip_id: int) -> list[Comment]:
-    return db.query(Comment).filter(Comment.trip_id == trip_id).all()
+    repo = CommentRepository(db)
+    return repo.get_by_trip_id(trip_id)
 
 def get_comments_by_user_id(db: Session, user_id: int) -> list[Comment]:
-    return db.query(Comment).filter(Comment.user_id == user_id).all()
+    repo = CommentRepository(db)
+    return repo.get_by_user_id(user_id)
 
-# Metodo auxiliar
 def validate_comment_length(content: str) -> None:
     """Valida longitud del contenido del comentario"""
     if len(content) < 5:
-        raise AppError(400, "COMMENT_TOO_SHORT", "El comentario debe tener al menos 5 caracteres")
+        raise AppError(400, ErrorCode.COMMENT_TOO_SHORT, "El comentario debe tener al menos 5 caracteres")
     if len(content) > 200:
-        raise AppError(400, "COMMENT_TOO_LONG", "El comentario no puede tener más de 200 caracteres")
+        raise AppError(400, ErrorCode.COMMENT_TOO_LONG, "El comentario no puede tener más de 200 caracteres")
 
+@transactional
 def create_comment(db: Session, comment_in: CommentCreate) -> Comment:
-    try:
-        # Validar longitud del contenido (también validado en schema, pero mantenemos por si acaso)
-        validate_comment_length(comment_in.content)
-        
-        # Crear comentario después de validaciones
-        comment = Comment(**comment_in.model_dump())
-        db.add(comment)
-        db.commit()
-        db.refresh(comment)
-        return comment
+    repo = CommentRepository(db)
+    
+    # Validar longitud del contenido (también validado en schema, pero mantenemos por si acaso)
+    validate_comment_length(comment_in.content)
+    
+    # VALIDAR FOREIGN KEYS: Verificar que user_id existe
+    if not get_user_by_id(db, comment_in.user_id):
+        raise AppError(404, ErrorCode.USER_NOT_FOUND, f"El usuario con ID {comment_in.user_id} no existe")
+    
+    # VALIDAR FOREIGN KEYS: Verificar que trip_id existe
+    if not get_trip_by_id(db, comment_in.trip_id):
+        raise AppError(404, ErrorCode.TRIP_NOT_FOUND, f"El viaje con ID {comment_in.trip_id} no existe")
+    
+    # Crear comentario después de validaciones
+    comment = Comment(**comment_in.model_dump())
+    return repo.create(comment)
 
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
-
+@transactional
 def update_comment(db: Session, comment_id: int, comment_in: CommentUpdate) -> Comment:
-    try:
-        # Reutilizar get_comment_by_id
-        comment = get_comment_by_id(db, comment_id)
-        if not comment:
-            raise AppError(404, "COMMENT_NOT_FOUND", "El comentario no existe")
+    repo = CommentRepository(db)
+    comment = repo.get_by_id(comment_id)
+    if not comment:
+        raise AppError(404, ErrorCode.COMMENT_NOT_FOUND, "El comentario no existe")
     
-        # Convertir a dict solo con campos no-None
-        comment_data = comment_in.model_dump(exclude_unset=True)
+    # Convertir a dict solo con campos no-None
+    comment_data = comment_in.model_dump(exclude_unset=True)
     
-        # Validar longitud si se está actualizando
-        if 'content' in comment_data and comment_data['content'] is not None:
-            validate_comment_length(comment_data['content'])
+    # Validar longitud si se está actualizando
+    if 'content' in comment_data and comment_data['content'] is not None:
+        validate_comment_length(comment_data['content'])
     
-        # Actualizar solo campos no-None
-        for key, value in comment_data.items():
-            if value is not None:
-                setattr(comment, key, value)
-    
-        db.commit()
-        db.refresh(comment)
-        return comment    
+    return repo.update(comment, comment_data)
 
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
-
+@transactional
 def delete_comment(db: Session, comment_id: int) -> None:
-    try:
-        # Reutilizar get_comment_by_id
-        comment = get_comment_by_id(db, comment_id)
-        if not comment:
-            raise AppError(404, "COMMENT_NOT_FOUND", "El comentario no existe")
-        
-        db.delete(comment)
-        db.commit()
-        return None
+    repo = CommentRepository(db)
+    comment = repo.get_by_id(comment_id)
+    if not comment:
+        raise AppError(404, ErrorCode.COMMENT_NOT_FOUND, "El comentario no existe")
 
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
+    repo.delete(comment)

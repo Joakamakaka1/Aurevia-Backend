@@ -3,124 +3,101 @@ from typing import cast
 from app.db.models.user import User
 from app.auth.security import verify_password, hash_password
 from app.core.exceptions import AppError
+from app.core.constants import ErrorCode
+from app.core.decorators import transactional
+from app.repository.user import UserRepository
 
 def get_all_users(db: Session) -> list[User]:
-    return db.query(User).all()
+    repo = UserRepository(db)
+    return repo.get_all()
 
 def get_by_email(db: Session, email: str) -> User | None:
-    return db.query(User).filter(User.email == email).first()
+    repo = UserRepository(db)
+    return repo.get_by_email(email)
 
 def get_by_username(db: Session, username: str) -> User | None:
-    return db.query(User).filter(User.username == username).first()
+    repo = UserRepository(db)
+    return repo.get_by_username(username)
 
 def get_user_by_id(db: Session, user_id: int) -> User | None:
-    return db.query(User).filter(User.id == user_id).first()
+    repo = UserRepository(db)
+    return repo.get_by_id(user_id)
 
+@transactional
 def create(db: Session, *, email: str, username: str, password: str, role: str = "user") -> User:
-    try:
-        # Validar duplicados primero
-        if get_by_email(db, email):
-            raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado")
-        
-        if get_by_username(db, username):
-            raise AppError(409, "USERNAME_DUPLICATED", "El nombre de usuario ya está registrado")
+    repo = UserRepository(db)
     
-        # Validar formato/longitud (la longitud también se valida en el schema, pero mantenemos por si acaso)
-        if len(username) < 3:
-            raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
+    # Validar duplicados
+    if repo.get_by_email(email):
+        raise AppError(409, ErrorCode.EMAIL_DUPLICATED, "El email ya está registrado")
     
-        if len(username) > 50:
-            raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
+    if repo.get_by_username(username):
+        raise AppError(409, ErrorCode.USERNAME_DUPLICATED, "El nombre de usuario ya está registrado")
     
-        # HASHEAR LA CONTRASEÑA ANTES DE GUARDARLA
-        hashed_pwd = hash_password(password)
+    # Nota: Validaciones de longitud de username ya las hace Pydantic
     
-        # Crear usuario después de todas las validaciones (incluyendo role)
-        user = User(email=email, username=username, hashed_password=hashed_pwd, role=role)
-
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
+    # HASHEAR LA CONTRASEÑA
+    hashed_pwd = hash_password(password)
     
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
-    
+    # Crear usuario
+    user = User(email=email, username=username, hashed_password=hashed_pwd, role=role)
+    return repo.create(user)
 
 def authenticate(db: Session, *, email: str, password: str) -> User:
+    # Authenticate es de lectura, no necesita transacción de escritura, pero sí manejo de errores
     try:
-        user = get_by_email(db, email)
+        repo = UserRepository(db)
+        user = repo.get_by_email(email)
         if not user:
-            raise AppError(404, "EMAIL_NOT_FOUND", "El email no existe")
+            raise AppError(404, ErrorCode.EMAIL_NOT_FOUND, "El email no existe")
 
         # VERIFICAR CONTRASEÑA HASHEADA
         if not verify_password(password, cast(str, user.hashed_password)):
-            raise AppError(400, "INVALID_PASSWORD", "La contraseña no es correcta")
+            raise AppError(400, ErrorCode.INVALID_PASSWORD, "La contraseña no es correcta")
         return user
-        
+    except AppError:
+        raise
     except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
+        raise AppError(500, ErrorCode.INTERNAL_SERVER_ERROR, str(e))
 
+@transactional
 def update_user_by_id(db: Session, user_id: int, user_data: dict) -> User:
-    try:
-        # Reutilizar get_user_by_id en lugar de duplicar la query
-        user = get_user_by_id(db, user_id)
-        if not user:
-            raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
+    repo = UserRepository(db)
+    user = repo.get_by_id(user_id)
+    if not user:
+        raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
     
-        # Validar email duplicado (excluyendo el mismo usuario)
-        if 'email' in user_data and user_data['email'] is not None:
-            existing_user = get_by_email(db, user_data['email'])
-            if existing_user and existing_user.id != user_id:
-                raise AppError(409, "EMAIL_DUPLICATED", "El email ya está registrado por otro usuario")
-    
-        # Validar username duplicado (excluyendo el mismo usuario)
-        if 'username' in user_data and user_data['username'] is not None:
-            existing_user = get_by_username(db, user_data['username'])
+    # Validar email duplicado (excluyendo el mismo usuario)
+    if 'email' in user_data and user_data['email'] is not None:
+        existing_user = repo.get_by_email(user_data['email'])
         if existing_user and existing_user.id != user_id:
-            raise AppError(409, "USERNAME_DUPLICATED", "El nombre de usuario ya está registrado por otro usuario")
-        
-        # Validar longitud de username
-        username = user_data['username']
-        if len(username) < 3:
-            raise AppError(400, "USERNAME_TOO_SHORT", "El nombre de usuario debe tener al menos 3 caracteres")
-        if len(username) > 50:
-            raise AppError(400, "USERNAME_TOO_LONG", "El nombre de usuario no puede tener más de 50 caracteres")
+            raise AppError(409, ErrorCode.EMAIL_DUPLICATED, "El email ya está registrado por otro usuario")
     
-        # SI SE ESTÁ ACTUALIZANDO LA CONTRASEÑA, HASHEARLA PRIMERO
-        if 'password' in user_data and user_data['password'] is not None:
-            # Hashear y guardar con el nombre correcto del campo en la BD
-            hashed = hash_password(user_data['password'])
-            user_data['hashed_password'] = hashed
-            # Eliminar 'password' del dict para no intentar asignar un campo que no existe en el modelo
-            del user_data['password']
-
-        # Actualizar solo los campos que no son None
-        for key, value in user_data.items():
-            if value is not None:
-                setattr(user, key, value)
+    # Validar username duplicado (excluyendo el mismo usuario)
+    if 'username' in user_data and user_data['username'] is not None:
+        existing_user = repo.get_by_username(user_data['username'])
+        if existing_user and existing_user.id != user_id:
+            raise AppError(409, ErrorCode.USERNAME_DUPLICATED, "El nombre de usuario ya está registrado por otro usuario")
     
-        db.commit()
-        db.refresh(user)
-        return user
+    # SI SE ESTÁ ACTUALIZANDO LA CONTRASEÑA, HASHEARLA PRIMERO
+    if 'password' in user_data and user_data['password'] is not None:
+        hashed = hash_password(user_data['password'])
+        user_data['hashed_password'] = hashed
+        del user_data['password']
 
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
+    # Actualizar campos
+    for key, value in user_data.items():
+        if value is not None:
+            setattr(user, key, value)
+    
+    # El commit lo hace el decorador
+    return user
 
+@transactional
 def delete_user_by_id(db: Session, user_id: int) -> None:
-    # Reutilizar get_user_by_id en lugar de duplicar la query
-    try:
-        user = get_user_by_id(db, user_id)
-        if not user:
-            raise AppError(404, "USER_NOT_FOUND", "El usuario no existe")
-    
-        db.delete(user)
-        db.commit()
-        return None
+    repo = UserRepository(db)
+    user = repo.get_by_id(user_id)
+    if not user:
+        raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
 
-    except Exception as e:
-        db.rollback()
-        raise AppError(500, "INTERNAL_SERVER_ERROR", str(e))
+    repo.delete(user)

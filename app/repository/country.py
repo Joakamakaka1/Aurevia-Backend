@@ -1,0 +1,29 @@
+from sqlalchemy.orm import Session
+from app.db.models.country import Country
+from typing import List, Optional
+
+class CountryRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self) -> List[Country]:
+        return self.db.query(Country).all()
+
+    def get_by_id(self, country_id: int) -> Optional[Country]:
+        return self.db.query(Country).filter(Country.id == country_id).first()
+
+    def get_by_name(self, name: str) -> Optional[Country]:
+        return self.db.query(Country).filter(Country.name == name).first()
+
+    def create(self, country: Country) -> Country:
+        self.db.add(country)
+        return country
+
+    def update(self, country: Country, country_data: dict) -> Country:
+        for key, value in country_data.items():
+            if value is not None:
+                setattr(country, key, value)
+        return country
+
+    def delete(self, country: Country) -> None:
+        self.db.delete(country)
