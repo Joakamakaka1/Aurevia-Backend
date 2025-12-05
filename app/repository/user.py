@@ -52,8 +52,6 @@ class UserRepository:
         
     def update(self, user_id: int, user_data: dict) -> User:
         user = self.get_by_id(user_id)
-        if not user:
-            raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
         
         # Actualizar campos
         for key, value in user_data.items():
