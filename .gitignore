@@ -52,3 +52,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+
+# Docker
+.docker-compose.yml
+.dockerfile
