@@ -139,12 +139,12 @@ Comentario en un viaje específico.
                │            │
                └────────────┘
                │            │
-          ┌─────────────────────────┐
-          │                         │
-          ▼                         ▼
-     ┌──────────┐              ┌──────────┐
-     │   Trip   │◄─────────────│ Comment  │
-     └──────────┘              └──────────┘
+          ┌────────────────────────┐
+          │                        │
+          ▼                        ▼
+     ┌──────────┐             ┌──────────┐
+     │   Trip   │◄────────────│ Comment  │
+     └──────────┘             └──────────┘
           │
      ┌──────────┐
      │ Country  │
@@ -185,11 +185,16 @@ Comentario en un viaje específico.
 
 ### Arquitectura
 
+- ✅ **Arquitectura en capas** - Endpoints → Services → Repositories → Models
+- ✅ **Patrón Repository** - Capa de acceso a datos separada
+- ✅ **Decorador @transactional** - Manejo automático de transacciones y rollbacks
+- ✅ **Eager loading** - Prevención del problema N+1 con joinedload
 - ✅ **Schemas en dos niveles** - Basic (nested) y Out (full response)
 - ✅ **Sin imports circulares** - Forward references con TYPE_CHECKING
 - ✅ **Validaciones en service layer** - Lógica de negocio centralizada
 - ✅ **Variables de entorno** - Credenciales en .env
-- ✅ **Seeding automático** - Datos de prueba al iniciar
+- ✅ **Seeding automático** - Datos de prueba al iniciar (solo si BD vacía)
+- ✅ **Docker y Docker Compose** - Containerización completa
 
 ---
 
@@ -239,23 +244,17 @@ source venv/bin/activate
 ### 4. Instalar dependencias
 
 ```bash
-# Framework y servidor
-pip install fastapi uvicorn
-
-# Base de datos
-pip install mysql-connector-python
-pip install sqlalchemy
-
-# Validación y seguridad
-pip install "pydantic[email]"
-pip install passlib
-pip install bcrypt
-pip install pyjwt
-
-# Utilidades
-pip install python-dotenv
-pip install requests
+pip install -r requirements.txt
 ```
+
+**Dependencias incluidas:**
+
+- FastAPI + Uvicorn (framework y servidor ASGI)
+- SQLAlchemy + MySQL Connector (ORM y driver de BD)
+- Pydantic + Email-Validator (validación de datos y emails)
+- PyJWT (autenticación JWT)
+- Passlib + Bcrypt (hashing de contraseñas)
+- Python-dotenv (variables de entorno)
 
 ### 5. Configurar variables de entorno
 
@@ -302,7 +301,122 @@ CREATE DATABASE aurevia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ---
 
-## 🚀 Uso
+## � Docker y Docker Compose
+
+### Opción 1: Uso con Docker Compose (Recomendado)
+
+Docker Compose levanta automáticamente la API y MySQL en contenedores separados.
+
+#### 1. Configurar variables de entorno
+
+Copia `.env.example` a `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Edita `.env` con tus credenciales. **Importante**: Para Docker, usa los valores por defecto de MySQL:
+
+```env
+# Database (valores para Docker)
+MYSQL_USER=root
+MYSQL_PASSWORD=tu_password_segura
+MYSQL_HOST=localhost  # Se cambiará automáticamente a 'db' dentro del contenedor
+MYSQL_PORT=3306
+MYSQL_DB=aurevia
+
+# JWT
+SECRET_KEY=genera-una-clave-con-python-c-import-secrets-print-secrets-token_hex-32
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:8100,http://127.0.0.1:8100
+
+# App
+ENVIRONMENT=development
+DEBUG=True
+```
+
+#### 2. Levantar los contenedores
+
+```bash
+# Construir y levantar los servicios
+docker-compose up --build
+
+# En modo detached (segundo plano)
+docker-compose up --build -d
+```
+
+#### 3. Verificar que todo funciona
+
+La API estará disponible en:
+
+- **API**: `http://localhost:8000`
+- **Docs**: `http://localhost:8000/docs`
+- **MySQL**: `localhost:3307` (puerto 3307 para evitar conflictos con MySQL local)
+
+#### 4. Ver logs
+
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
+
+# Ver logs solo de la API
+docker-compose logs -f api
+
+# Ver logs solo de MySQL
+docker-compose logs -f db
+```
+
+#### 5. Detener los contenedores
+
+```bash
+# Detener sin eliminar
+docker-compose stop
+
+# Detener y eliminar contenedores
+docker-compose down
+
+# Detener, eliminar contenedores y volúmenes (⚠️ elimina los datos de la BD)
+docker-compose down -v
+```
+
+### Opción 2: Solo Dockerfile
+
+Si prefieres usar solo Docker (con MySQL local):
+
+```bash
+# Construir imagen
+docker build -t aurevia-api .
+
+# Ejecutar contenedor
+docker run -p 8000:8000 --env-file .env aurevia-api
+```
+
+### Características de la configuración Docker
+
+✅ **Healthcheck de MySQL**: La API espera a que MySQL esté completamente listo antes de iniciar
+✅ **Reinicio automático**: MySQL se reinicia automáticamente si falla
+✅ **Volúmenes persistentes**: Los datos de MySQL se guardan en un volumen (`mysql_data`)
+✅ **Red dedicada**: API y BD se comunican en una red privada (`aurevia_network`)
+✅ **Hot reload opcional**: El código se monta como volumen para desarrollo (puedes desactivarlo en producción)
+
+### Conectarse a MySQL del contenedor
+
+Si necesitas acceder a la base de datos directamente:
+
+```bash
+# Desde tu máquina local
+mysql -h 127.0.0.1 -P 3307 -u root -p
+
+# Desde dentro del contenedor
+docker exec -it aurevia_db mysql -u root -p
+```
+
+---
+
+## �🚀 Uso
 
 ### Iniciar servidor
 
@@ -333,6 +447,23 @@ FastAPI genera documentación interactiva automáticamente:
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
 - **OpenAPI Schema:** `http://localhost:8000/openapi.json`
+
+### Healthcheck
+
+Endpoint para verificar el estado de la API:
+
+```bash
+GET /api/v1/healthy
+```
+
+**Respuesta:**
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-12-05T00:55:00"
+}
+```
 
 ---
 
@@ -494,52 +625,93 @@ Para desactivar el seeding, comenta las líneas en `app/main.py`:
 Aurevia_API-v.01/
 ├── app/
 │   ├── api/
+│   │   ├── deps.py             # Inyección de dependencias de servicios
 │   │   └── v1/
 │   │       ├── __init__.py
-│   │       └── endpoints/
-│   │           ├── user.py
-│   │           ├── trip.py
-│   │           ├── comment.py
-│   │           ├── country.py
-│   │           └── city.py
+│   │       └── endpoints/      # Endpoints de la API
+│   │           ├── user.py     # Auth: registro, login, CRUD usuarios
+│   │           ├── trip.py     # CRUD viajes
+│   │           ├── comment.py  # CRUD comentarios
+│   │           ├── country.py  # CRUD países
+│   │           ├── city.py     # CRUD ciudades
+│   │           └── healthy.py  # Healthcheck endpoint
 │   ├── auth/
-│   │   ├── deps.py         # Dependencias (get_db)
-│   │   ├── jwt.py          # JWT utilities
-│   │   └── security.py     # Password hashing
+│   │   ├── deps.py         # Dependencias de autenticación (get_db, get_current_user)
+│   │   ├── jwt.py          # Creación y decodificación de JWT
+│   │   └── security.py     # Bcrypt password hashing
 │   ├── core/
-│   │   ├── config.py       # Settings (desde .env)
-│   │   └── exceptions.py   # Error handlers
+│   │   ├── config.py       # Settings desde .env
+│   │   ├── constants.py    # Error codes y constantes
+│   │   ├── decorators.py   # @transactional para manejo de transacciones
+│   │   └── exceptions.py   # AppError y exception handlers
 │   ├── db/
-│   │   ├── base.py         # Base class
-│   │   ├── session.py      # DB session
-│   │   ├── seed.py         # Seeding data
-│   │   └── models/
+│   │   ├── base.py         # Base SQLAlchemy
+│   │   ├── session.py      # Engine y SessionLocal
+│   │   ├── seed.py         # Datos de prueba iniciales
+│   │   └── models/         # Modelos SQLAlchemy
 │   │       ├── user.py
 │   │       ├── trip.py
 │   │       ├── comment.py
 │   │       ├── country.py
 │   │       └── city.py
-│   ├── schemas/
-│   │   ├── user.py         # Pydantic models
-│   │   ├── trip.py
-│   │   ├── comment.py
-│   │   ├── country.py
-│   │   └── city.py
-│   ├── service/
-│   │   ├── user.py         # Business logic
-│   │   ├── trip.py
-│   │   ├── comment.py
-│   │   ├── country.py
-│   │   └── city.py
-│   └── main.py             # FastAPI app
-├── .env                    # Environment variables (NOT in git)
-├── .env.example            # Template
+│   ├── repository/         # Capa de acceso a datos (patrón Repository)
+│   │   ├── user.py         # Consultas a BD de usuarios
+│   │   ├── trip.py         # Consultas a BD de viajes
+│   │   ├── comment.py      # Consultas a BD de comentarios
+│   │   ├── country.py      # Consultas a BD de países
+│   │   └── city.py         # Consultas a BD de ciudades
+│   ├── schemas/            # Schemas Pydantic para validación
+│   │   ├── user.py         # UserCreate, UserUpdate, UserOut, Token
+│   │   ├── trip.py         # TripCreate, TripUpdate, TripOut
+│   │   ├── comment.py      # CommentCreate, CommentUpdate, CommentOut
+│   │   ├── country.py      # CountryCreate, CountryUpdate, CountryOut
+│   │   └── city.py         # CityCreate, CityUpdate, CityOut
+│   ├── service/            # Lógica de negocio y validaciones
+│   │   ├── user.py         # Validaciones de usuarios, autenticación
+│   │   ├── trip.py         # Validaciones de viajes, fechas
+│   │   ├── comment.py      # Validaciones de comentarios
+│   │   ├── country.py      # Validaciones de países
+│   │   └── city.py         # Validaciones de ciudades
+│   └── main.py             # Aplicación FastAPI principal
+├── kubernetes/             # Configuración de Kubernetes (opcional)
+├── .env                    # Variables de entorno (NO en git)
+├── .env.example            # Plantilla de variables de entorno
 ├── .gitignore
 ├── .dockerignore
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
+├── Dockerfile              # Imagen Docker de la API
+├── docker-compose.yml      # Orquestación de API + MySQL
+├── requirements.txt        # Dependencias Python
 └── README.md
+```
+
+### Arquitectura en Capas
+
+La aplicación sigue una arquitectura en capas limpia:
+
+```
+┌─────────────────────────────────────────┐
+│  Endpoints (API Layer)                  │  ← FastAPI routes
+│  - Validación de entrada (Pydantic)     │
+│  - Serialización de respuesta           │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│  Services (Business Logic Layer)        │  ← Validaciones de negocio
+│  - Validaciones complejas               │  ← Orquestación
+│  - Lógica de negocio                    │  ← @transactional
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│  Repositories (Data Access Layer)       │  ← Consultas SQL
+│  - Queries a base de datos              │  ← Eager loading
+│  - CRUD básico                          │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│  Models (Database Layer)                │  ← SQLAlchemy ORM
+│  - Definición de tablas                 │
+│  - Relaciones entre entidades           │
+└─────────────────────────────────────────┘
 ```
 
 ---
@@ -589,7 +761,7 @@ Todos los errores retornan un formato consistente:
 - 🔜 Paginación en listados
 - 🔜 Rate limiting
 - 🔜 Tests unitarios e integración
-- 🔜 Docker, Docker Compose y Kubernetes
+- 🔜 Despliegue en Kubernetes
 - 🔜 CI/CD Pipeline
 
 ---
