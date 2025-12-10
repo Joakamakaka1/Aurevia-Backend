@@ -78,9 +78,9 @@ class UserService:
         self.db = db
         self.repo = UserRepository(db)
 
-    def get_all(self) -> List[User]:
-        """Obtener todos los usuarios"""
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
+        """Obtener todos los usuarios con paginación"""
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_email(self, email: str) -> Optional[User]:
         """Obtener usuario por email"""
@@ -136,6 +136,49 @@ class UserService:
 
         return user
 
+    def login(self, *, email: str, password: str) -> dict:
+        """
+        Autentica y genera tokens JWT.
+        """
+        # 1. Autenticar credenciales
+        user = self.authenticate(email=email, password=password)
+
+        # 2. Generar tokens
+        token_data = {"user_id": user.id, "username": user.username, "role": user.role}
+        access_token = create_access_token(data=token_data)
+        refresh_token = create_refresh_token(data=token_data)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user
+        }
+
+    def refresh_token(self, refresh_token: str) -> dict:
+        """
+        Renueva access token usando refresh token.
+        """
+        try:
+            # 1. Validar refresh token
+            token_data = decode_refresh_token(refresh_token)
+
+            # 2. Verificar usuario en BD (importante por seguridad)
+            user = self.repo.get_by_id(token_data.get("user_id"))
+            if not user:
+                raise AppError(401, "USER_NOT_FOUND", "Usuario no encontrado")
+
+            # 3. Generar nuevos tokens
+            new_data = {"user_id": user.id, "username": user.username, "role": user.role}
+            return {
+                "access_token": create_access_token(new_data),
+                "refresh_token": create_refresh_token(new_data),
+                "token_type": "bearer",
+                "user": user
+            }
+        except Exception as e:
+            raise AppError(401, "INVALID_TOKEN", str(e))
+
     @transactional
     def update(self, user_id: int, user_data: dict) -> User:
         """
@@ -148,48 +191,32 @@ class UserService:
         4. Hashear password (si se está cambiando)
         5. Actualizar en BD
         """
-        # VALIDACIÓN 1: Usuario existe
         user = self.repo.get_by_id(user_id)
         if not user:
             raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
 
-        # VALIDACIÓN 2: Email duplicado
         if 'email' in user_data and user_data['email'] is not None:
             existing = self.repo.get_by_email(user_data['email'])
             if existing and existing.id != user_id:
-                raise AppError(409, ErrorCode.EMAIL_DUPLICATED, "Email ya usado por otro usuario")
+                raise AppError(409, ErrorCode.EMAIL_DUPLICATED, "Email ya usado")
 
-        # VALIDACIÓN 3: Username duplicado
-        if 'username' in user_data and user_data['username'] is not None:
-            existing = self.repo.get_by_username(user_data['username'])
-            if existing and existing.id != user_id:
-                raise AppError(409, ErrorCode.USERNAME_DUPLICATED, "Username ya usado por otro usuario")
+        # ... (otras validaciones) ...
 
-        # TRANSFORMACIÓN: Hashear password si se está cambiando
         if 'password' in user_data and user_data['password'] is not None:
             hashed = hash_password(user_data['password'])
             user_data['hashed_password'] = hashed
             del user_data['password']
 
-        # ACTUALIZAR: Delegar a repository
         return self.repo.update(user_id, user_data)
-        # @transactional hace commit
 
     @transactional
     def delete(self, user_id: int) -> None:
-        """
-        Eliminar usuario.
-
-        Lógica de negocio:
-        1. Verificar que usuario exista
-        2. Eliminar (cascade elimina trips y comments)
-        """
+        """Eliminar usuario."""
         user = self.repo.get_by_id(user_id)
         if not user:
             raise AppError(404, ErrorCode.USER_NOT_FOUND, "El usuario no existe")
 
         self.repo.delete(user)
-        # @transactional hace commit
 ```
 
 ## 💡 Conceptos Clave

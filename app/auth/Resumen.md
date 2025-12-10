@@ -280,28 +280,29 @@ def get_trips(db: Session = Depends(get_db)):
     return db.query(Trip).all()
 ```
 
-**Futuro: Proteger endpoints**
+**Dependencias Implementadas:**
 
 ```python
-# (No implementado aún)
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> User:
-    """Obtiene el usuario actual desde el token JWT"""
-    payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(401, "Token inválido")
+# Validar token y obtener datos del usuario
+def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
+    """
+    Valida el token JWT y retorna los datos del usuario (id, username, role).
+    NOTA: Por rendimiento, NO verifica existencia en BD en cada request,
+    solo valida la firma criptográfica y expiración del token.
+    """
+    # ... implementación ...
+    return TokenData(user_id=..., username=..., role=...)
 
-    user = db.query(User).filter(User.id == payload["user_id"]).first()
-    if not user:
-        raise HTTPException(404, "Usuario no encontrado")
+# RBAC (Control de Acceso Basado en Roles)
+allow_admin = RoleChecker(["admin"])
 
-    return user
+@router.get("/users", dependencies=[Depends(allow_admin)])
+def get_users(db: Session = Depends(get_db)):
+    # Solo administradores pueden acceder
+    pass
 
-# Usar en endpoints protegidos
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user: TokenData = Depends(get_current_user)):
     return current_user
 ```
 
@@ -395,10 +396,18 @@ truncated_password = password[:72]
 
 ## 🔗 Relación con Otros Módulos
 
+## 🔗 Relación con Otros Módulos
+
 ```
 ┌──────────────┐
-│  endpoints/  │  ← Llama a create_access_token() al hacer login
-│   user.py    │    Llama a hash_password() al registrar
+│  endpoints/  │  ← Endpoint llama a service.create()
+│   user.py    │
+└──────┬───────┘
+       │
+       ↓
+┌──────────────┐
+│   service/   │  ← Service llama a hash_password()
+│   user.py    │    Llama a create_access_token() (si aplica)
 └──────┬───────┘
        │
        ↓

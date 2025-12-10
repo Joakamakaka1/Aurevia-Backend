@@ -475,7 +475,7 @@ GET /api/v1/healthy
 | ------ | ---------------------- | ---------------------------- | --------------------------------------- |
 | POST   | `/register`            | Registrar usuario            | `{email, username, password, role?}`    |
 | POST   | `/login`               | Login y obtener JWT          | `{email, password}`                     |
-| GET    | `/`                    | Listar todos los usuarios    | -                                       |
+| GET    | `/`                    | Listar usuarios (Paginado)   | Query: `?skip=0&limit=50`               |
 | GET    | `/id/{user_id}`        | Obtener usuario por ID       | -                                       |
 | GET    | `/email/{email}`       | Obtener usuario por email    | -                                       |
 | GET    | `/username/{username}` | Obtener usuario por username | -                                       |
@@ -484,47 +484,47 @@ GET /api/v1/healthy
 
 ### Viajes (`/api/v1/trip`)
 
-| Método | Endpoint     | Descripción             | Body                                                             |
-| ------ | ------------ | ----------------------- | ---------------------------------------------------------------- |
-| GET    | `/`          | Listar todos los viajes | -                                                                |
-| GET    | `/{trip_id}` | Obtener viaje por ID    | -                                                                |
-| POST   | `/`          | Crear viaje             | `{name, description, start_date, end_date, user_id, country_id}` |
-| PUT    | `/{trip_id}` | Actualizar viaje        | `{name?, description?, start_date?, end_date?, country_id?}`     |
-| DELETE | `/{trip_id}` | Eliminar viaje          | -                                                                |
+| Método | Endpoint     | Descripción              | Body                                                             |
+| ------ | ------------ | ------------------------ | ---------------------------------------------------------------- |
+| GET    | `/`          | Listar viajes (Paginado) | Query: `?skip=0&limit=50`                                        |
+| GET    | `/{trip_id}` | Obtener viaje por ID     | -                                                                |
+| POST   | `/`          | Crear viaje              | `{name, description, start_date, end_date, user_id, country_id}` |
+| PUT    | `/{trip_id}` | Actualizar viaje         | `{name?, description?, start_date?, end_date?, country_id?}`     |
+| DELETE | `/{trip_id}` | Eliminar viaje           | -                                                                |
 
 ### Comentarios (`/api/v1/comment`)
 
-| Método | Endpoint          | Descripción                  | Body                          |
-| ------ | ----------------- | ---------------------------- | ----------------------------- |
-| GET    | `/`               | Listar todos los comentarios | -                             |
-| GET    | `/{comment_id}`   | Obtener comentario por ID    | -                             |
-| GET    | `/user/{user_id}` | Comentarios de un usuario    | -                             |
-| GET    | `/trip/{trip_id}` | Comentarios de un viaje      | -                             |
-| POST   | `/`               | Crear comentario             | `{content, user_id, trip_id}` |
-| PUT    | `/{comment_id}`   | Actualizar comentario        | `{content?}`                  |
-| DELETE | `/{comment_id}`   | Eliminar comentario          | -                             |
+| Método | Endpoint          | Descripción               | Body                          |
+| ------ | ----------------- | ------------------------- | ----------------------------- |
+| GET    | `/`               | Listar comentarios (Peg.) | Query: `?skip=0&limit=50`     |
+| GET    | `/{comment_id}`   | Obtener comentario por ID | -                             |
+| GET    | `/user/{user_id}` | Comentarios de un usuario | -                             |
+| GET    | `/trip/{trip_id}` | Comentarios de un viaje   | -                             |
+| POST   | `/`               | Crear comentario          | `{content, user_id, trip_id}` |
+| PUT    | `/{comment_id}`   | Actualizar comentario     | `{content?}`                  |
+| DELETE | `/{comment_id}`   | Eliminar comentario       | -                             |
 
 ### Países (`/api/v1/country`)
 
-| Método | Endpoint               | Descripción             | Body      |
-| ------ | ---------------------- | ----------------------- | --------- |
-| GET    | `/`                    | Listar todos los países | -         |
-| GET    | `/id/{country_id}`     | Obtener país por ID     | -         |
-| GET    | `/name/{country_name}` | Obtener país por nombre | -         |
-| POST   | `/`                    | Crear país              | `{name}`  |
-| PUT    | `/{country_id}`        | Actualizar país         | `{name?}` |
-| DELETE | `/{country_id}`        | Eliminar país           | -         |
+| Método | Endpoint               | Descripción              | Body                      |
+| ------ | ---------------------- | ------------------------ | ------------------------- |
+| GET    | `/`                    | Listar países (Paginado) | Query: `?skip=0&limit=50` |
+| GET    | `/id/{country_id}`     | Obtener país por ID      | -                         |
+| GET    | `/name/{country_name}` | Obtener país por nombre  | -                         |
+| POST   | `/`                    | Crear país               | `{name}`                  |
+| PUT    | `/{country_id}`        | Actualizar país          | `{name?}`                 |
+| DELETE | `/{country_id}`        | Eliminar país            | -                         |
 
 ### Ciudades (`/api/v1/city`)
 
-| Método | Endpoint            | Descripción               | Body                                          |
-| ------ | ------------------- | ------------------------- | --------------------------------------------- |
-| GET    | `/`                 | Listar todas las ciudades | -                                             |
-| GET    | `/id/{city_id}`     | Obtener ciudad por ID     | -                                             |
-| GET    | `/name/{city_name}` | Obtener ciudad por nombre | -                                             |
-| POST   | `/`                 | Crear ciudad              | `{name, latitude?, longitude?, country_id}`   |
-| PUT    | `/{city_id}`        | Actualizar ciudad         | `{name?, latitude?, longitude?, country_id?}` |
-| DELETE | `/{city_id}`        | Eliminar ciudad           | -                                             |
+| Método | Endpoint            | Descripción                | Body                                          |
+| ------ | ------------------- | -------------------------- | --------------------------------------------- |
+| GET    | `/`                 | Listar ciudades (Paginado) | Query: `?skip=0&limit=50`                     |
+| GET    | `/id/{city_id}`     | Obtener ciudad por ID      | -                                             |
+| GET    | `/name/{city_name}` | Obtener ciudad por nombre  | -                                             |
+| POST   | `/`                 | Crear ciudad               | `{name, latitude?, longitude?, country_id}`   |
+| PUT    | `/{city_id}`        | Actualizar ciudad          | `{name?, latitude?, longitude?, country_id?}` |
+| DELETE | `/{city_id}`        | Eliminar ciudad            | -                                             |
 
 ---
 

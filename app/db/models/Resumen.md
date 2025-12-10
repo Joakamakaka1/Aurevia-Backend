@@ -28,8 +28,7 @@ models/
 ├── trip.py          # ✈️ Viaje (experiencia de viaje)
 ├── country.py       # 🌍 País (destino)
 ├── city.py          # 🏙️ Ciudad (ubicación específica)
-├── comment.py       # 💬 Comentario (en un viaje)
-└── friendship.py    # 🤝 Amistad (comentado, no usado)
+└── comment.py       # 💬 Comentario (en un viaje)
 ```
 
 ## 🛠️ Tecnologías Usadas

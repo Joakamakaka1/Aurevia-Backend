@@ -27,7 +27,6 @@ schemas/
 ├── city.py          # Schemas de ciudades
 ├── comment.py       # Schemas de comentarios
 ├── country.py       # Schemas de países
-├── friendship.py    # Schemas de amistad (comentado)
 ├── trip.py          # Schemas de viajes
 └── user.py          # Schemas de usuarios y JWT
 ```

@@ -80,7 +80,7 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[User]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
         """Obtener todos los usuarios con sus relaciones"""
         return (
             self.db.query(User)
@@ -88,17 +88,25 @@ class UserRepository:
                 joinedload(User.trips),      # Eager load trips
                 joinedload(User.comments)    # Eager load comments
             )
+            .offset(skip).limit(limit)
             .all()
         )
 
     def get_by_id(self, user_id: int) -> Optional[User]:
-        """Obtener usuario por ID"""
+        """Obtener usuario por ID (con relaciones)"""
         return (
             self.db.query(User)
             .options(joinedload(User.trips), joinedload(User.comments))
             .filter(User.id == user_id)
-            .first()  # Retorna None si no existe
+            .first()
         )
+
+    def get_by_id_light(self, user_id: int) -> Optional[User]:
+        """
+        Versión ligera sin relaciones.
+        Útil para validaciones rápidas (ej. en refresh_token).
+        """
+        return self.db.query(User).filter(User.id == user_id).first()
 
     def get_by_email(self, email: str) -> Optional[User]:
         """Obtener usuario por email"""
@@ -109,19 +117,12 @@ class UserRepository:
             .first()
         )
 
-    def get_by_username(self, username: str) -> Optional[User]:
-        """Obtener usuario por username"""
-        return (
-            self.db.query(User)
-            .options(joinedload(User.trips), joinedload(User.comments))
-            .filter(User.username == username)
-            .first()
-        )
+    # ... get_by_username ...
 
     def create(self, user: User) -> User:
-        """Crear nuevo usuario"""
+        """Crear nuevo usuario (sin commit)"""
         self.db.add(user)
-        # NO hace commit (lo hace @transactional en service)
+        self.db.flush()  # Generar ID
         return user
 
     def update(self, user_id: int, user_data: dict) -> User:
@@ -130,18 +131,16 @@ class UserRepository:
         if not user:
             raise AppError(404, ErrorCode.USER_NOT_FOUND, "Usuario no existe")
 
-        # Actualizar campos
+        # Actualizar campos dinámicamente
         for key, value in user_data.items():
             if value is not None:
                 setattr(user, key, value)
 
-        # NO hace commit (lo hace @transactional)
-        return user
+        return user  # @transactional en service hará el commit
 
     def delete(self, user: User) -> None:
         """Eliminar usuario"""
         self.db.delete(user)
-        # NO hace commit
 ```
 
 ## 💡 Conceptos Clave
@@ -188,7 +187,7 @@ Todos los repositories tienen estos métodos básicos:
 
 ```python
 class SomeRepository:
-    def get_all() -> List[Model]:        # SELECT *
+    def get_all(skip=0, limit=100) -> List[Model]:        # SELECT * LIMIT ? OFFSET ?
     def get_by_id(id) -> Optional[Model]: # SELECT WHERE id = ?
     def create(model) -> Model:          # INSERT
     def update(id, data) -> Model:       # UPDATE

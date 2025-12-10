@@ -192,35 +192,40 @@ def transactional(func):
     - Si hay excepción → ROLLBACK
     """
     @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Buscar sesión de BD en argumentos
-        db = None
-        for arg in args:
-            if isinstance(arg, Session):
-                db = arg
-                break
-
-        if not db and 'db' in kwargs:
-            db = kwargs['db']
+    async def async_wrapper(*args, **kwargs):
+        # 1. Busca db en args, kwargs o self.db
+        db = get_db_session(*args, **kwargs)
 
         if not db:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
 
         try:
-            result = func(*args, **kwargs)
-            db.commit()  # ✅ Commit si todo OK
+            result = await func(*args, **kwargs)
+            db.commit()
             if hasattr(result, "__dict__"):
-                db.refresh(result)  # Recargar para obtener valores generados (ID, etc.)
+                db.refresh(result)
             return result
         except AppError:
-            db.rollback()  # ❌ Rollback si error controlado
+            db.rollback()
             raise
         except Exception as e:
-            db.rollback()  # ❌ Rollback si error inesperado
+            db.rollback()
             raise AppError(500, ErrorCode.INTERNAL_SERVER_ERROR, str(e))
 
-    return wrapper
+    # Soporte para funciones síncronas y asíncronas
+    if inspect.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
 ```
+
+**Características:**
+
+- ✅ Soporta funciones **síncronas** y **asíncronas** (`async def`).
+- ✅ Busca la sesión de BD en:
+  1. Argumentos posicionales (si alguno es `Session`).
+  2. Argumentos nombrados (`kwargs['db']`).
+  3. Atributo `self.db` (útil para métodos de clase Service).
 
 **Uso:**
 

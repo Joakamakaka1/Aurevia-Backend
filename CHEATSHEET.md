@@ -107,7 +107,8 @@ curl -X GET http://localhost:8000/api/v1/trip/ \
 
 ```bash
 # Listar viajes
-GET /api/v1/trip/
+# Listar viajes
+GET /api/v1/trip/?skip=0&limit=50
 
 # Obtener viaje por ID
 GET /api/v1/trip/1
@@ -257,12 +258,17 @@ from fastapi import APIRouter, Depends
 from app.service.tu_servicio import TuServicio
 from app.api.deps import get_tu_servicio
 from app.schemas.tu_schema import TuOut
+from typing import List
 
 router = APIRouter(prefix="/v1/tu-recurso", tags=["Tu Recurso"])
 
-@router.get("/", response_model=list[TuOut])
-def get_all(service: TuServicio = Depends(get_tu_servicio)):
-    return service.get_all()
+@router.get("/", response_model=List[TuOut])
+def get_all(
+    skip: int = 0,
+    limit: int = 50,
+    service: TuServicio = Depends(get_tu_servicio)
+):
+    return service.get_all(skip=skip, limit=limit)
 ```
 
 ### Crear un Nuevo Servicio
@@ -280,16 +286,18 @@ class TuServicio:
         self.db = db
         self.repo = TuRepository(db)
 
-    def get_all(self):
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100):
+        return self.repo.get_all(skip=skip, limit=limit)
 
     @transactional
-    def create(self, data):
-        # Validaciones de negocio aquí
-        if existe_duplicado:
+    def create(self, data: TuCreate):
+        # Validaciones de negocio
+        if self.repo.get_by_name(data.nombre):
             raise AppError(409, ErrorCode.DUPLICADO, "Ya existe")
 
-        return self.repo.create(data)
+        # Crear entidad (Service crea, Repo guarda)
+        entity = TuModelo(**data.model_dump())
+        return self.repo.create(entity)
 ```
 
 ### Crear un Nuevo Repository
@@ -303,8 +311,8 @@ class TuRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self):
-        return self.db.query(TuModelo).all()
+    def get_all(self, skip: int = 0, limit: int = 100):
+        return self.db.query(TuModelo).offset(skip).limit(limit).all()
 
     def get_by_id(self, id: int):
         return self.db.query(TuModelo).filter(TuModelo.id == id).first()
