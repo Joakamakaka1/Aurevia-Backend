@@ -7,8 +7,8 @@ class CityRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[City]:
-        return self.db.query(City).all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[City]:
+        return self.db.query(City).offset(skip).limit(limit).all()
 
     def get_by_id(self, city_id: int) -> Optional[City]:
         return self.db.query(City).filter(City.id == city_id).first()
@@ -16,6 +16,13 @@ class CityRepository:
     def get_by_name(self, name: str) -> Optional[City]:
         # Nota: Buscar solo por nombre puede ser ambiguo (ej: 'San José' existe en muchos países)
         return self.db.query(City).filter(City.name == name).first()
+    
+    def get_by_name_and_country(self, name: str, country_id: int) -> Optional[City]:
+        """Buscar ciudad por nombre y país (composite unique)"""
+        return self.db.query(City).filter(
+            City.name == name,
+            City.country_id == country_id
+        ).first()
         
     def get_by_geoname_id(self, geoname_id: int) -> Optional[City]:
         """Buscar ciudad por ID de GeoNames"""

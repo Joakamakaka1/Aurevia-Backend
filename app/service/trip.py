@@ -27,8 +27,8 @@ class TripService:
         self.user_repo = UserRepository(db)
         self.country_repo = CountryRepository(db)
 
-    def get_all(self) -> List[Trip]:
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Trip]:
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_name(self, name: str) -> Optional[Trip]:
         return self.repo.get_by_name(name)

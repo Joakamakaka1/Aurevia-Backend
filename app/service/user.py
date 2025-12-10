@@ -24,8 +24,8 @@ class UserService:
         self.db = db
         self.repo = UserRepository(db)
 
-    def get_all(self) -> List[User]:
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_email(self, email: str) -> Optional[User]:
         return self.repo.get_by_email(email)

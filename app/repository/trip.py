@@ -13,10 +13,12 @@ class TripRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[Trip]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Trip]:
         return (
             self.db.query(Trip)
             .options(joinedload(Trip.country), joinedload(Trip.comments))
+            .offset(skip)
+            .limit(limit)
             .all()
         )
 

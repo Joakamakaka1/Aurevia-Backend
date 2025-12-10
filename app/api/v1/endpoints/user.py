@@ -2,15 +2,17 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 
 from app.service.user import UserService
-from app.schemas.user import UserCreate, UserUpdate, UserOut, UserLogin, Token, TokenData, RoleUpdate, TokenRefresh
+from app.schemas.user import UserCreate, UserUpdate, UserOut, UserLogin, Token, RoleUpdate, TokenRefresh
 from app.core.exceptions import AppError
 from app.api.deps import get_user_service
-from app.auth.deps import get_current_user, allow_admin
+from app.auth.deps import get_current_user, allow_admin, check_self_or_admin
 
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
 
 @router.get("/", response_model=List[UserOut], status_code=status.HTTP_200_OK)
 def get_all_users(
+    skip: int = 0,
+    limit: int = 50,
     service: UserService = Depends(get_user_service),
     admin_user = Depends(allow_admin)
 ):
@@ -18,13 +20,7 @@ def get_all_users(
     Obtener todos los usuarios.
     Solo accesible para administradores.
     """
-    return service.get_all()
-
-# Metodo auxiliar para controlar privacidad
-def check_self_or_admin(current_user: TokenData, resource_owner_id: int):
-    """Permite el acceso si es Admin o si el usuario es dueño del recurso"""
-    if current_user.role != "admin" and current_user.user_id != resource_owner_id:
-        raise AppError(403, "FORBIDDEN", "No tienes permiso para realizar esta acción")
+    return service.get_all(skip=skip, limit=limit)
 
 @router.get("/username/{username}", response_model=UserOut, status_code=status.HTTP_200_OK)
 def get_user_by_username(

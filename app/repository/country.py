@@ -6,8 +6,8 @@ class CountryRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[Country]:
-        return self.db.query(Country).all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Country]:
+        return self.db.query(Country).offset(skip).limit(limit).all()
 
     def get_by_id(self, country_id: int) -> Optional[Country]:
         return self.db.query(Country).filter(Country.id == country_id).first()

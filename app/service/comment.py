@@ -23,8 +23,8 @@ class CommentService:
         self.user_repo = UserRepository(db)
         self.trip_repo = TripRepository(db)
 
-    def get_all(self) -> List[Comment]:
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Comment]:
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_id(self, comment_id: int) -> Optional[Comment]:
         return self.repo.get_by_id(comment_id)

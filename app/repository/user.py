@@ -12,10 +12,12 @@ class UserRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[User]:
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
         return (
             self.db.query(User)
             .options(joinedload(User.trips), joinedload(User.comments))
+            .offset(skip)
+            .limit(limit)
             .all()
         )
 

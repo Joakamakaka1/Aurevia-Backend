@@ -9,8 +9,12 @@ from app.auth.deps import get_current_user, allow_admin
 router = APIRouter(prefix="/v1/country", tags=["Country"])
 
 @router.get("/", response_model=List[CountryOut], status_code=status.HTTP_200_OK)
-def get_all_countries(service: CountryService = Depends(get_country_service)):
-    return service.get_all()
+def get_all_countries(
+    skip: int = 0,
+    limit: int = 50,
+    service: CountryService = Depends(get_country_service)
+):
+    return service.get_all(skip=skip, limit=limit)
 
 @router.get("/{name}", response_model=CountryOut, status_code=status.HTTP_200_OK)
 def get_country_by_name(name: str, service: CountryService = Depends(get_country_service)):
@@ -20,10 +24,14 @@ def get_country_by_name(name: str, service: CountryService = Depends(get_country
     return country
 
 @router.post("/populate", status_code=status.HTTP_200_OK)
-async def populate_countries(service: CountryService = Depends(get_country_service)):
+async def populate_countries(
+    service: CountryService = Depends(get_country_service),
+    admin_user = Depends(allow_admin)
+):
     """
     Puebla la base de datos de países desde REST Countries API.
     Actualiza los existentes y crea los nuevos.
+    Solo accesible para administradores.
     """
     return await service.populate_from_api()
 
@@ -31,7 +39,7 @@ async def populate_countries(service: CountryService = Depends(get_country_servi
 def create_country(
     payload: CountryCreate, 
     service: CountryService = Depends(get_country_service),
-    current_user = Depends(get_current_user)
+    admin_user = Depends(allow_admin)
 ):
     return service.create(country_in=payload)
 
@@ -40,7 +48,7 @@ def update_country(
     id: int, 
     payload: CountryUpdate, 
     service: CountryService = Depends(get_country_service),
-    current_user = Depends(get_current_user)
+    admin_user = Depends(allow_admin)
 ):
     return service.update(country_id=id, country_in=payload)
 

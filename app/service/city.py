@@ -27,8 +27,8 @@ class CityService:
         self.db = db
         self.repo = CityRepository(db)
 
-    def get_all(self) -> List[City]:
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[City]:
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_name(self, name: str) -> Optional[City]:
         return self.repo.get_by_name(name)
@@ -207,10 +207,7 @@ class CityService:
              # Verificar duplicado solo en el MISMO país
              target_country_id = city_data.get('country_id', city.country_id)
              
-             existing_city = self.db.query(City).filter(
-                 City.name == city_data['name'],
-                 City.country_id == target_country_id
-             ).first()
+             existing_city = self.repo.get_by_name_and_country(city_data['name'], target_country_id)
              
              if existing_city and existing_city.id != city_id:
                   raise AppError(409, ErrorCode.CITY_ALREADY_EXISTS, "La ciudad ya existe en este país")

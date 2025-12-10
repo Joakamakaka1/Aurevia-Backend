@@ -6,8 +6,8 @@ class CommentRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> List[Comment]:
-        return self.db.query(Comment).all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Comment]:
+        return self.db.query(Comment).offset(skip).limit(limit).all()
 
     def get_by_id(self, comment_id: int) -> Optional[Comment]:
         return self.db.query(Comment).filter(Comment.id == comment_id).first()

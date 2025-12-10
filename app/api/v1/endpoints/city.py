@@ -9,8 +9,12 @@ from app.auth.deps import get_current_user, allow_admin
 router = APIRouter(prefix="/v1/city", tags=["City"])
 
 @router.get("/", response_model=List[CityOut], status_code=status.HTTP_200_OK)
-def get_all_cities(service: CityService = Depends(get_city_service)):
-    return service.get_all()
+def get_all_cities(
+    skip: int = 0,
+    limit: int = 50,
+    service: CityService = Depends(get_city_service)
+):
+    return service.get_all(skip=skip, limit=limit)
 
 @router.get("/name/{name}", response_model=CityOut, status_code=status.HTTP_200_OK)
 def get_city_by_name(name: str, service: CityService = Depends(get_city_service)):
@@ -32,12 +36,14 @@ def get_cities_by_country(country_code: str, service: CityService = Depends(get_
 async def populate_cities(
     country_code: str = None, 
     limit: int = 50,
-    service: CityService = Depends(get_city_service)
+    service: CityService = Depends(get_city_service),
+    admin_user = Depends(allow_admin)
 ):
     """
     Puebla ciudades desde GeoNames API.
     Si se especifica country_code (ej: 'ES'), solo para ese país.
     Si no, intenta poblar para TODOS los países (puede tardar).
+    Solo accesible para administradores.
     """
     if country_code:
         return await service.populate_from_api(country_code, limit=limit)
@@ -48,7 +54,7 @@ async def populate_cities(
 def create_city(
     payload: CityCreate, 
     service: CityService = Depends(get_city_service),
-    current_user = Depends(get_current_user)
+    admin_user = Depends(allow_admin)
 ):
     return service.create(city_in=payload)
 
@@ -57,7 +63,7 @@ def update_city(
     id: int, 
     payload: CityUpdate, 
     service: CityService = Depends(get_city_service),
-    current_user = Depends(get_current_user)
+    admin_user = Depends(allow_admin)
 ):
     return service.update(city_id=id, city_in=payload)
 

@@ -16,8 +16,8 @@ class CountryService:
         self.db = db
         self.repo = CountryRepository(db)
 
-    def get_all(self) -> List[Country]:
-        return self.repo.get_all()
+    def get_all(self, skip: int = 0, limit: int = 100) -> List[Country]:
+        return self.repo.get_all(skip=skip, limit=limit)
 
     def get_by_id(self, country_id: int) -> Optional[Country]:
         return self.repo.get_by_id(country_id)

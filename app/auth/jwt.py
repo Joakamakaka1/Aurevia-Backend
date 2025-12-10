@@ -35,22 +35,25 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     encoded_jwt = jwt.encode(to_encode, settings.PRIVATE_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+def _decode_token(token: str, expected_type: str) -> dict:
+    """
+    Función helper interna para decodificar y validar el tipo de token.
+    """
+    payload = jwt.decode(token, settings.PUBLIC_KEY, algorithms=[settings.ALGORITHM])
+    if payload.get("type") != expected_type:
+        raise jwt.InvalidTokenError(f"El token no es de tipo '{expected_type}'")
+    return payload
+
 def decode_access_token(token: str) -> Optional[dict]:
     """
     Decodifica y valida un Access Token.
     Retorna None si es inválido, expirado o no es de tipo 'access'.
     """
-    payload = jwt.decode(token, settings.PUBLIC_KEY, algorithms=[settings.ALGORITHM])
-    if payload.get("type") != "access":
-        raise jwt.InvalidTokenError("El token no es de tipo 'access'")
-    return payload
+    return _decode_token(token, "access")
 
 def decode_refresh_token(token: str) -> Optional[dict]:
     """
     Decodifica y valida un Refresh Token.
     Retorna None si es inválido, expirado o no es de tipo 'refresh'.
     """
-    payload = jwt.decode(token, settings.PUBLIC_KEY, algorithms=[settings.ALGORITHM])
-    if payload.get("type") != "refresh":
-        raise jwt.InvalidTokenError("El token no es de tipo 'refresh'")
-    return payload
+    return _decode_token(token, "refresh")

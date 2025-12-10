@@ -1,6 +1,7 @@
-import os
 from pathlib import Path
 from typing import Tuple
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 def get_rsa_keys(certs_dir: str = "certs") -> Tuple[str, str]:
     """
@@ -24,16 +25,6 @@ def get_rsa_keys(certs_dir: str = "certs") -> Tuple[str, str]:
             public_key_path.read_text(encoding="utf-8")
         )
     
-    # Si no existen, necesitamos cryptography para generarlas
-    try:
-        from cryptography.hazmat.primitives import serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa
-    except ImportError:
-        raise ImportError(
-            "La librería 'cryptography' es necesaria para generar las claves automáticamente. "
-            "Instálala con 'pip install cryptography' o genera las claves 'certs/private.pem' y 'certs/public.pem' manualmente con OpenSSL."
-        )
-
     # Crear directorio si no existe
     certs_path.mkdir(exist_ok=True)
     

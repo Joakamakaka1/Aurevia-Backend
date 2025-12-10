@@ -133,3 +133,8 @@ class RoleChecker:
 
 # Dependencias listas para usar
 allow_admin = RoleChecker(["admin"])
+
+def check_self_or_admin(current_user: TokenData, resource_owner_id: int):
+    """Permite el acceso si es Admin o si el usuario es dueño del recurso"""
+    if current_user.role != "admin" and current_user.user_id != resource_owner_id:
+        raise AppError(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "No tienes permiso para realizar esta acción")
