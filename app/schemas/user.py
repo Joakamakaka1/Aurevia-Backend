@@ -23,13 +23,13 @@ class UserBase(BaseModel):
     id: int
     email: EmailStr
     username: str
-    role: Optional[Literal["user", "admin", "superadmin"]] = "user"  # Role opcional, por defecto "user"
+    role: Optional[Literal["user", "admin"]] = "user"  # Role opcional, por defecto "user"
 
 class UserCreate(BaseModel):
     email: EmailStr
     username: str
     password: str  # El cliente envía la contraseña en texto plano, se hashea en el servidor
-    role: Optional[Literal["user", "admin", "superadmin"]] = "user"  # Role opcional, por defecto "user"
+    role: Optional[Literal["user", "admin"]] = "user"  # Role opcional, por defecto "user"
     
     @field_validator('username')
     @classmethod
@@ -40,23 +40,15 @@ class UserCreate(BaseModel):
             raise ValueError('El nombre de usuario no puede tener más de 50 caracteres')
         return v
 
-    @field_validator('email')
-    @classmethod
-    def validate_email_format(cls, v: str) -> str:
-        try:
-            # Validar formato email
-            EmailStr.validate(v)
-            return v
-        except ValueError:
-            raise ValueError('El email debe tener un formato válido')
-
     @field_validator('password')
     @classmethod
     def validate_password_length(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if len(v) > 72:  # Límite de bcrypt
-            raise ValueError('La contraseña no puede tener más de 72 caracteres')
+        password_bytes = len(v.encode('utf-8'))
+        
+        if password_bytes < 8:
+            raise ValueError('La contraseña debe tener al menos 8 bytes')
+        if password_bytes > 72:  # Límite de bcrypt
+            raise ValueError('La contraseña no puede exceder 72 bytes (límite de bcrypt)')
 
         # Opcional: Validar complejidad
         # if not any(c.isupper() for c in v):
@@ -74,7 +66,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     password: Optional[str] = None  # El cliente envía la contraseña en texto plano
-    role: Optional[Literal["user", "admin", "superadmin"]] = None
+    # role removido de aquí por seguridad - usar endpoint /change-role
     
     @field_validator('username')
     @classmethod
@@ -86,9 +78,22 @@ class UserUpdate(BaseModel):
                 raise ValueError('El nombre de usuario no puede tener más de 50 caracteres')
         return v
 
+class RoleUpdate(BaseModel):
+    """Schema para cambiar el role de un usuario (solo admin)"""
+    role: Literal["user", "admin"]
+
 # ============================================================================
-# SCHEMA DE SALIDA (Out) - Para respuestas principales
+# SCHEMAS DE SALIDA (Out)
 # ============================================================================
+
+class UserBasicOut(BaseModel):
+    """Schema simplificado de usuario para respuestas de token (sin relaciones)"""
+    id: int
+    email: EmailStr
+    username: str
+    role: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class UserOut(BaseModel):
     """Schema completo de usuario con relaciones para respuestas"""
@@ -110,8 +115,13 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     """Schema para la respuesta de login con token JWT"""
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
-    user: UserOut  # Información del usuario autenticado
+    user: UserBasicOut  # Información básica del usuario sin relaciones
+
+class TokenRefresh(BaseModel):
+    """Schema para solicitud de refresco de token"""
+    refresh_token: str
 
 class TokenData(BaseModel):
     """Schema para los datos dentro del token JWT"""

@@ -10,9 +10,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     
-    # Campo role con valores predefinidos: user, admin, superadmin
+    # Campo role con valores predefinidos: user, admin
     role: Mapped[str] = mapped_column(
-        Enum("user", "admin", "superadmin", name="user_role_enum"), 
+        Enum("user", "admin", name="user_role_enum"), 
         nullable=False, 
         default="user",
         server_default="user"

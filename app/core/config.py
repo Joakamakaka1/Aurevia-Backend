@@ -29,6 +29,7 @@ class Settings:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "fallback-secret-key-only-for-development")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
     
     def __post_init__(self):
         """Validar configuración después de inicialización"""
@@ -64,9 +65,5 @@ class Settings:
         '''
         origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8100,http://127.0.0.1:8100")
         return [origin.strip() for origin in origins.split(",")]
-    
-    # Application Settings
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
 settings = Settings()

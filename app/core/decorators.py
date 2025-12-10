@@ -30,6 +30,10 @@ def transactional(func):
         
         if not db and 'db' in kwargs:
             db = kwargs['db']
+        
+        # Si no encontramos db en argumentos, buscar en self.db
+        if not db and len(args) > 0 and hasattr(args[0], 'db'):
+            db = args[0].db
             
         if not db:
             # Si no encontramos la sesión, ejecutamos la función normalmente

@@ -5,46 +5,58 @@ from app.core.config import settings
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
-    Crea un token JWT con los datos proporcionados.
-    
-    Args:
-        data: Diccionario con los datos a incluir en el token (user_id, role, etc.)
-        expires_delta: Tiempo de expiración opcional. Si no se provee, usa el valor por defecto de config
-    
-    Returns:
-        str: Token JWT codificado
+    Crea un token JWT de acceso (Access Token).
+    Duración corta (ej. minutos).
     """
     to_encode = data.copy()
     
-    # Establecer tiempo de expiración
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    # Agregar claim de expiración
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Crea un token JWT de refresco (Refresh Token).
+    Duración larga (ej. días).
+    """
+    to_encode = data.copy()
     
-    # Crear el token
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 def decode_access_token(token: str) -> Optional[dict]:
     """
-    Decodifica un token JWT y retorna los datos.
-    
-    Args:
-        token: Token JWT a decodificar
-        
-    Returns:
-        Optional[dict]: Datos del token si es válido, None si es inválido o expirado
+    Decodifica y valida un Access Token.
+    Retorna None si es inválido, expirado o no es de tipo 'access'.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "access":
+            return None
         return payload
-    except jwt.ExpiredSignatureError:
-        # Token expirado
+    except (jwt.ExpiredSignatureError, jwt.JWTError):
         return None
-    except jwt.JWTError:
-        # Token inválido
+
+def decode_refresh_token(token: str) -> Optional[dict]:
+    """
+    Decodifica y valida un Refresh Token.
+    Retorna None si es inválido, expirado o no es de tipo 'refresh'.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "refresh":
+            return None
+        return payload
+    except (jwt.ExpiredSignatureError, jwt.JWTError):
         return None
