@@ -4,6 +4,7 @@ from app.service.comment import CommentService
 from app.schemas.comment import *
 from app.core.exceptions import AppError
 from app.api.deps import get_comment_service
+from app.auth.deps import get_current_user
 
 router = APIRouter(prefix="/v1/comment", tags=["Comment"])
 
@@ -27,13 +28,28 @@ def get_comments_by_user(user_id: int, service: CommentService = Depends(get_com
     return service.get_by_user_id(user_id)
 
 @router.post("/", response_model=CommentOut, status_code=status.HTTP_201_CREATED)
-def create_comment(payload: CommentCreate, service: CommentService = Depends(get_comment_service)):
+def create_comment(
+    payload: CommentCreate, 
+    service: CommentService = Depends(get_comment_service),
+    current_user = Depends(get_current_user)
+):
+    # Opcional: Validar que el usuario que crea el comentario sea el mismo del token (payload.user_id == current_user.user_id)
     return service.create(comment_in=payload)
 
 @router.put("/{id}", response_model=CommentOut, status_code=status.HTTP_200_OK)
-def update_comment(id: int, payload: CommentUpdate, service: CommentService = Depends(get_comment_service)):
+def update_comment(
+    id: int, 
+    payload: CommentUpdate, 
+    service: CommentService = Depends(get_comment_service),
+    current_user = Depends(get_current_user)
+):
+    # Aquí deberías verificar que el comentario pertenece al usuario antes de permitir editar
     return service.update(comment_id=id, comment_in=payload)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_comment(id: int, service: CommentService = Depends(get_comment_service)):
+def delete_comment(
+    id: int, 
+    service: CommentService = Depends(get_comment_service),
+    current_user = Depends(get_current_user)
+):
     service.delete(comment_id=id)

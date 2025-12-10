@@ -4,6 +4,7 @@ from app.service.city import CityService
 from app.schemas.city import *
 from app.core.exceptions import AppError
 from app.api.deps import get_city_service
+from app.auth.deps import get_current_user, allow_admin
 
 router = APIRouter(prefix="/v1/city", tags=["City"])
 
@@ -44,13 +45,26 @@ async def populate_cities(
         return await service.populate_all_countries_cities(limit_per_country=limit)
 
 @router.post("/", response_model=CityOut, status_code=status.HTTP_201_CREATED)
-def create_city(payload: CityCreate, service: CityService = Depends(get_city_service)):
+def create_city(
+    payload: CityCreate, 
+    service: CityService = Depends(get_city_service),
+    current_user = Depends(get_current_user)
+):
     return service.create(city_in=payload)
 
 @router.put("/{id}", response_model=CityOut, status_code=status.HTTP_200_OK)
-def update_city(id: int, payload: CityUpdate, service: CityService = Depends(get_city_service)):
+def update_city(
+    id: int, 
+    payload: CityUpdate, 
+    service: CityService = Depends(get_city_service),
+    current_user = Depends(get_current_user)
+):
     return service.update(city_id=id, city_in=payload)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_city(id: int, service: CityService = Depends(get_city_service)):
+def delete_city(
+    id: int, 
+    service: CityService = Depends(get_city_service),
+    admin_user = Depends(allow_admin)
+):
     service.delete(city_id=id)

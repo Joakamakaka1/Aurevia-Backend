@@ -32,6 +32,10 @@ class UserService:
 
     def get_by_id(self, user_id: int) -> Optional[User]:
         return self.repo.get_by_id(user_id)
+    
+    def get_by_id_light(self, user_id: int) -> Optional[User]:
+        """Versión ligera sin relaciones para validaciones rápidas"""
+        return self.repo.get_by_id_light(user_id)
 
     @transactional
     def create(self, *, email: str, username: str, password: str, role: str = "user") -> User:

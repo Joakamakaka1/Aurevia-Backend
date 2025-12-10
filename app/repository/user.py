@@ -43,10 +43,22 @@ class UserRepository:
             .filter(User.id == user_id)
             .first()
         )
+    
+    def get_by_id_light(self, user_id: int) -> Optional[User]:
+        """
+        Versión ligera de get_by_id sin cargar relaciones.
+        Útil para verificaciones rápidas como validación de tokens.
+        """
+        return (
+            self.db.query(User)
+            .filter(User.id == user_id)
+            .first()
+        )
 
     def create(self, user: User) -> User:
         # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(user)
+        self.db.flush()  # Genera el ID antes de retornar
         return user
 
         

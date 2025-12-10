@@ -4,6 +4,7 @@ from app.service.country import CountryService
 from app.schemas.country import *
 from app.core.exceptions import AppError
 from app.api.deps import get_country_service
+from app.auth.deps import get_current_user, allow_admin
 
 router = APIRouter(prefix="/v1/country", tags=["Country"])
 
@@ -27,13 +28,26 @@ async def populate_countries(service: CountryService = Depends(get_country_servi
     return await service.populate_from_api()
 
 @router.post("/", response_model=CountryOut, status_code=status.HTTP_201_CREATED)
-def create_country(payload: CountryCreate, service: CountryService = Depends(get_country_service)):
+def create_country(
+    payload: CountryCreate, 
+    service: CountryService = Depends(get_country_service),
+    current_user = Depends(get_current_user)
+):
     return service.create(country_in=payload)
 
 @router.put("/{id}", response_model=CountryOut, status_code=status.HTTP_200_OK)
-def update_country(id: int, payload: CountryUpdate, service: CountryService = Depends(get_country_service)):
+def update_country(
+    id: int, 
+    payload: CountryUpdate, 
+    service: CountryService = Depends(get_country_service),
+    current_user = Depends(get_current_user)
+):
     return service.update(country_id=id, country_in=payload)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_country(id: int, service: CountryService = Depends(get_country_service)):
+def delete_country(
+    id: int, 
+    service: CountryService = Depends(get_country_service),
+    admin_user = Depends(allow_admin)
+):
     service.delete(country_id=id)
