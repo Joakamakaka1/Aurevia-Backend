@@ -1,11 +1,12 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.auth.jwt import decode_access_token
+import jwt
 from app.schemas.user import TokenData
+from app.core.exceptions import AppError
 
 # ============================================================================
 # DATABASE DEPENDENCY
@@ -59,22 +60,43 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudieron validar las credenciales",
-        headers={"WWW-Authenticate": "Bearer"},
     )
-    
-    payload = decode_access_token(token)
-    
-    if payload is None:
-        raise credentials_exception
+    try:
+        payload = decode_access_token(token)
         
-    user_id: Optional[int] = payload.get("user_id")
-    username: Optional[str] = payload.get("username")
-    role: Optional[str] = payload.get("role")
-    
-    if user_id is None or username is None or role is None:
-        raise credentials_exception
+        user_id: Optional[int] = payload.get("user_id")
+        username: Optional[str] = payload.get("username")
+        role: Optional[str] = payload.get("role")
         
-    return TokenData(user_id=user_id, username=username, role=role)
+        if user_id is None or username is None or role is None:
+            raise AppError(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                code="INVALID_TOKEN_PAYLOAD",
+                message="Token inválido: Faltan datos del usuario (id, username, role)"
+            )
+            
+        return TokenData(user_id=user_id, username=username, role=role)
+        
+    except jwt.ExpiredSignatureError:
+        raise AppError(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="TOKEN_EXPIRED",
+            message="El token ha expirado. Por favor, inicia sesión de nuevo."
+        )
+    except jwt.InvalidTokenError as e:
+        raise AppError(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="INVALID_TOKEN",
+            message=f"Token inválido: {str(e)}"
+        )
+    except Exception as e:
+        # Capturar cualquier otro error inesperado en la decodificación
+        raise AppError(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="TOKEN_VALIDATION_ERROR",
+            message="No se pudo validar el token",
+            details={"error_original": str(e)}
+        )
 
 # ============================================================================
 # ROLE BASED ACCESS CONTROL (RBAC)
@@ -101,9 +123,11 @@ class RoleChecker:
         
         # Verificar si el usuario tiene alguno de los roles permitidos
         if not any(role in self.allowed_roles for role in user_permissions):
-            raise HTTPException(
+            raise AppError(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Operación no permitida. Se requiere rol: {', '.join(self.allowed_roles)}"
+                code="INSUFFICIENT_PERMISSIONS",
+                message=f"Operación no permitida. Se requiere uno de los siguientes roles: {', '.join(self.allowed_roles)}",
+                details={"user_role": user.role, "required_roles": self.allowed_roles}
             )
         return user
 

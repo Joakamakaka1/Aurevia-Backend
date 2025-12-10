@@ -17,8 +17,13 @@ def hash_password(password: str) -> str:
         str: Contraseña hasheada con bcrypt
     """
     # Bcrypt solo puede manejar contraseñas de hasta 72 bytes
-    # Truncamos para compatibilidad con bcrypt >= 5.0
-    truncated_password = password[:72] if len(password.encode('utf-8')) > 72 else password
+    # Truncar correctamente a nivel de bytes para evitar cortar caracteres multibyte
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Truncar a 72 bytes y decodificar de forma segura (ignorando caracteres incompletos)
+        truncated_password = password_bytes[:72].decode('utf-8', errors='ignore')
+    else:
+        truncated_password = password
     return pwd_context.hash(truncated_password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -33,5 +38,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         bool: True si la contraseña es correcta, False en caso contrario
     """
     # Aplicar el mismo truncamiento que en el hasheo
-    truncated_password = plain_password[:72] if len(plain_password.encode('utf-8')) > 72 else plain_password
+    password_bytes = plain_password.encode('utf-8')
+    if len(password_bytes) > 72:
+        truncated_password = password_bytes[:72].decode('utf-8', errors='ignore')
+    else:
+        truncated_password = plain_password
     return pwd_context.verify(truncated_password, hashed_password)

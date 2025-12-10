@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from typing import Optional, Literal
 from app.schemas.trip import TripBasic
 from app.schemas.comment import CommentBasic
+import string
 
 # ============================================================================
 # SCHEMAS BÁSICOS (sin relaciones) - Para usar dentro de otros schemas
@@ -43,18 +44,23 @@ class UserCreate(BaseModel):
     @field_validator('password')
     @classmethod
     def validate_password_length(cls, v: str) -> str:
+        # Validar que solo contenga caracteres alfanuméricos y símbolos comunes
+        # Rechazar emojis y caracteres no-ASCII
+        allowed_chars = string.ascii_letters + string.digits + string.punctuation + ' '
+        
+        for char in v:
+            if char not in allowed_chars:
+                raise ValueError(
+                    'La contraseña solo puede contener letras (a-z, A-Z), números (0-9), '
+                    'y símbolos estándar (!@#$%^&*, etc.). No se permiten emojis ni caracteres especiales.'
+                )
+        
         password_bytes = len(v.encode('utf-8'))
         
         if password_bytes < 8:
             raise ValueError('La contraseña debe tener al menos 8 bytes')
         if password_bytes > 72:  # Límite de bcrypt
             raise ValueError('La contraseña no puede exceder 72 bytes (límite de bcrypt)')
-
-        # Opcional: Validar complejidad
-        # if not any(c.isupper() for c in v):
-        #     raise ValueError('La contraseña debe contener al menos una mayúscula')
-        # if not any(c.isdigit() for c in v):
-        #     raise ValueError('La contraseña debe contener al menos un número')
         
         return v
 

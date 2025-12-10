@@ -25,19 +25,19 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
     
     # JWT Settings
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "fallback-secret-key-only-for-development")
-    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
+    ALGORITHM: str = "RS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
     
-    def __post_init__(self):
-        """Validar configuración después de inicialización"""
-        # SEGURIDAD: No permitir SECRET_KEY por defecto en producción
-        if self.ENVIRONMENT != "development" and self.SECRET_KEY == "fallback-secret-key-only-for-development":
-            raise ValueError(
-                "SECRET_KEY must be set in production environment. "
-                "Generate a secure key with: python -c \"import secrets; print(secrets.token_hex(32))\""
-            )
+    # RSA Keys (Loaded dynamically)
+    PRIVATE_KEY: str = ""
+    PUBLIC_KEY: str = ""
+    
+    def __init__(self):
+        """Cargar claves RSA al iniciar configuración"""
+        from app.core.security_keys import get_rsa_keys
+        self.PRIVATE_KEY, self.PUBLIC_KEY = get_rsa_keys()
+
     
     # Database
     MYSQL_USER: str = os.getenv("MYSQL_USER", "root")
