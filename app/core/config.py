@@ -12,7 +12,6 @@ Incluye:
 '''
 
 import os
-from typing import Optional
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde .env
@@ -65,6 +64,11 @@ class Settings:
         origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8100,http://127.0.0.1:8100")
         return [origin.strip() for origin in origins.split(",")]
     
+    # External APIs
+    REST_COUNTRIES_URL: str = os.getenv("REST_COUNTRIES_URL", "https://restcountries.com/v3.1")
+    GEONAMES_URL: str = os.getenv("GEONAMES_URL", "http://api.geonames.org")
+    GEONAMES_USERNAME: str = os.getenv("GEONAMES_USERNAME", "")
+
     # Application Settings
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")

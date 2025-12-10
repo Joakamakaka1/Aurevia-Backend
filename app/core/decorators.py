@@ -19,21 +19,56 @@ def transactional(func):
             # código que modifica la BD
             return user
     '''
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Buscar el objeto db (Session) en los argumentos
-        db = None
+    import inspect
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    def get_db_session(*args, **kwargs):
+        # 1. Buscar directamente Session en args
         for arg in args:
             if isinstance(arg, Session):
-                db = arg
-                break
+                return arg
         
-        if not db and 'db' in kwargs:
-            db = kwargs['db']
+        # 2. Buscar en kwargs
+        if 'db' in kwargs and isinstance(kwargs['db'], Session):
+            return kwargs['db']
             
+        # 3. Buscar en el primer argumento (self) si tiene atributo .db
+        # Esto es necesario para los métodos de servicios (Service.method)
+        # RELAXED CHECK: No usamos isinstance por si hay problemas de importación
+        if args and hasattr(args[0], 'db'):
+            return args[0].db
+            
+        return None
+
+    @wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        db = get_db_session(*args, **kwargs)
+        
         if not db:
-            # Si no encontramos la sesión, ejecutamos la función normalmente
-            # (esto no debería pasar si se usa correctamente)
+            logger.warning(f"TRANSACTION SKIPPED: No DB session found for {func.__name__}")
+            return await func(*args, **kwargs)
+            
+        try:
+            result = await func(*args, **kwargs)
+            db.commit()
+            if hasattr(result, "__dict__"):
+                db.refresh(result)
+            return result
+        except AppError:
+            db.rollback()
+            raise
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Transaction failed in {func.__name__}: {str(e)}")
+            raise AppError(500, ErrorCode.INTERNAL_SERVER_ERROR, str(e))
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        db = get_db_session(*args, **kwargs)
+        
+        if not db:
             return func(*args, **kwargs)
             
         try:
@@ -43,12 +78,13 @@ def transactional(func):
                 db.refresh(result)
             return result
         except AppError:
-            # Si es un error de aplicación ya controlado, solo hacemos rollback y re-lanzamos
             db.rollback()
             raise
         except Exception as e:
-            # Si es un error inesperado, hacemos rollback y lanzamos AppError 500
             db.rollback()
             raise AppError(500, ErrorCode.INTERNAL_SERVER_ERROR, str(e))
-            
-    return wrapper
+
+    if inspect.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper

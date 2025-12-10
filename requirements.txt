@@ -19,6 +19,9 @@ pyjwt==2.10.1
 # Environment Variables
 python-dotenv==1.2.1
 
+# HTTP Client
+httpx>=0.28.0
+
 # Dependencies (auto-installed with above packages)
 annotated-types==0.7.0
 anyio==4.11.0

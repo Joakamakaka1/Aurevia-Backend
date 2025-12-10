@@ -14,11 +14,28 @@ class CountryRepository:
 
     def get_by_name(self, name: str) -> Optional[Country]:
         return self.db.query(Country).filter(Country.name == name).first()
+    
+    def get_by_code_alpha2(self, code: str) -> Optional[Country]:
+        """Buscar país por código ISO 3166-1 alpha-2"""
+        if not code:
+            return None
+        return self.db.query(Country).filter(Country.code_alpha2 == code.upper()).first()
+    
+    def get_by_code_alpha3(self, code: str) -> Optional[Country]:
+        """Buscar país por código ISO 3166-1 alpha-3"""
+        if not code:
+            return None
+        return self.db.query(Country).filter(Country.code_alpha3 == code.upper()).first()
 
     def create(self, country: Country) -> Country:
         # Nota: No hacemos commit aquí, lo maneja el servicio con el decorador @transactional
         self.db.add(country)
         return country
+        
+    def bulk_create(self, countries: List[Country]) -> List[Country]:
+        """Inserción masiva de países para mejor rendimiento"""
+        self.db.add_all(countries)
+        return countries
 
     def update(self, country: Country, country_data: dict) -> Country:
         for key, value in country_data.items():

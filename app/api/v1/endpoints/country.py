@@ -18,6 +18,14 @@ def get_country_by_name(name: str, service: CountryService = Depends(get_country
         raise AppError(404, "COUNTRY_NOT_FOUND", "El país no existe")
     return country
 
+@router.post("/populate", status_code=status.HTTP_200_OK)
+async def populate_countries(service: CountryService = Depends(get_country_service)):
+    """
+    Puebla la base de datos de países desde REST Countries API.
+    Actualiza los existentes y crea los nuevos.
+    """
+    return await service.populate_from_api()
+
 @router.post("/", response_model=CountryOut, status_code=status.HTTP_201_CREATED)
 def create_country(payload: CountryCreate, service: CountryService = Depends(get_country_service)):
     return service.create(country_in=payload)

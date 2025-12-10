@@ -10,8 +10,9 @@ class CityBasic(BaseModel):
     """Schema básico de ciudad para usar en relaciones"""
     id: int
     name: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    population: Optional[int] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -21,11 +22,13 @@ class CityBasic(BaseModel):
 
 class CityBase(BaseModel):
     name: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class CityCreate(CityBase):
     country_id: int
+    population: Optional[int] = None
+    geoname_id: Optional[int] = None
     
     @field_validator('name')
     @classmethod
@@ -41,6 +44,8 @@ class CityUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     country_id: Optional[int] = None
+    population: Optional[int] = None
+    geoname_id: Optional[int] = None
     
     @field_validator('name')
     @classmethod
@@ -60,9 +65,11 @@ class CityOut(BaseModel):
     """Schema completo de ciudad con relaciones para respuestas"""
     id: int
     name: str
-    country_id: Optional[int] = None  # Puede ser NULL según el modelo
-    latitude: float
-    longitude: float
-    country: Optional[CountryBasic] = None  # Puede ser NULL, usa versión básica
+    country_id: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    population: Optional[int] = None
+    geoname_id: Optional[int] = None
+    country: Optional[CountryBasic] = None
    
     model_config = ConfigDict(from_attributes=True)
