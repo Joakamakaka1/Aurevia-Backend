@@ -31,7 +31,7 @@ def transactional(func):
                 return arg
         
         # 2. Buscar en kwargs
-        if 'db' in kwargs and isinstance(kwargs['db'], Session):
+        if 'db' in kwargs:
             return kwargs['db']
             
         # 3. Buscar en el primer argumento (self) si tiene atributo .db

@@ -146,6 +146,7 @@ def refresh_token_endpoint(payload: TokenRefresh, service: UserService = Depends
         "user": user
     }
 
+# Se usa patch porque solo se actualiza un campo: el role
 @router.patch("/{user_id}/change-role", response_model=UserOut, status_code=status.HTTP_200_OK)
 def change_user_role(
     user_id: int,

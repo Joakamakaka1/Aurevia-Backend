@@ -70,9 +70,4 @@ class Settings:
     GEONAMES_URL: str = os.getenv("GEONAMES_URL", "http://api.geonames.org")
     GEONAMES_USERNAME: str = os.getenv("GEONAMES_USERNAME", "")
 
-    # Application Settings
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
-
-
 settings = Settings()

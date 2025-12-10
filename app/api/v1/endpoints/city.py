@@ -12,7 +12,7 @@ router = APIRouter(prefix="/v1/city", tags=["City"])
 def get_all_cities(service: CityService = Depends(get_city_service)):
     return service.get_all()
 
-@router.get("/{name}", response_model=CityOut, status_code=status.HTTP_200_OK)
+@router.get("/name/{name}", response_model=CityOut, status_code=status.HTTP_200_OK)
 def get_city_by_name(name: str, service: CityService = Depends(get_city_service)):
     city = service.get_by_name(name)
     if not city:
