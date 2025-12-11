@@ -44,14 +44,14 @@ Base.metadata.create_all(bind=engine)
 # SEED DATABASE (Development/Testing)
 # Solo se ejecuta si la base de datos está vacía
 # ============================================================================
-from app.db.seed import seed_db
-from app.db.session import SessionLocal
+# from app.db.seed import seed_db
+# from app.db.session import SessionLocal
 
-try:
-    db = SessionLocal()
-    seed_db(db)
-finally:
-    db.close()  # Siempre cerrar la sesión
+# try:
+#     db = SessionLocal()
+#     seed_db(db)
+# finally:
+#     db.close()  # Siempre cerrar la sesión
 
 # Incluir routers de API
 app.include_router(api_router, prefix="/api")
