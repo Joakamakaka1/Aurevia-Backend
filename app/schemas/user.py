@@ -13,6 +13,7 @@ class UserBasic(BaseModel):
     id: int
     email: EmailStr
     username: str
+    image_url: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -98,6 +99,7 @@ class UserBasicOut(BaseModel):
     email: EmailStr
     username: str
     role: str
+    image_url: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,6 +109,7 @@ class UserOut(BaseModel):
     email: EmailStr
     username: str
     role: str  # Incluir role en la respuesta
+    image_url: Optional[str] = None
     trips: list[TripBasic] = []  # Solo info básica de viajes (sin comments anidados)
     comments: list[CommentBasic] = []  # Solo info básica de comentarios (sin viajes anidados)
     # NO incluimos comments del usuario para evitar redundancia

@@ -69,5 +69,10 @@ class Settings:
     REST_COUNTRIES_URL: str = os.getenv("REST_COUNTRIES_URL", "https://restcountries.com/v3.1")
     GEONAMES_URL: str = os.getenv("GEONAMES_URL", "http://api.geonames.org")
     GEONAMES_USERNAME: str = os.getenv("GEONAMES_USERNAME", "")
+    
+    # Image Upload (Cloudinary)
+    CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
+    CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
 settings = Settings()

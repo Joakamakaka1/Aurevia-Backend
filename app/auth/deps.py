@@ -56,6 +56,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     críticos (delete user, change role) verifican existencia explícitamente.
     La duración corta del access token (configurada en settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     minimiza el riesgo de tokens huérfanos.
+    minimiza el riesgo de tokens huérfanos.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

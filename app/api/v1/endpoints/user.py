@@ -1,6 +1,8 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 
+from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
+from app.service.image import image_service
 from app.service.user import UserService
 from app.schemas.user import UserCreate, UserUpdate, UserOut, UserLogin, Token, RoleUpdate, TokenRefresh
 from app.core.exceptions import AppError
@@ -138,3 +140,19 @@ def delete_user(
     # Validar que el usuario solo pueda borrarse a sí mismo (salvo que sea admin)
     check_self_or_admin(current_user, user_id)
     service.delete(user_id=user_id)
+
+@router.post("/update-image", response_model=UserOut, status_code=status.HTTP_200_OK)
+def upload_profile_image(
+    file: UploadFile = File(...), 
+    service: UserService = Depends(get_user_service),
+    current_user = Depends(get_current_user)
+):
+    """
+    Sube una imagen de perfil para el usuario actual.
+    La imagen se aloja en Cloudinary.
+    """
+    image_url = image_service.upload_image(file)
+    
+    # Actualizar usuario con la nueva URL
+    # current_user es TokenData, tiene user_id
+    return service.update(user_id=current_user.user_id, user_data={"image_url": image_url})

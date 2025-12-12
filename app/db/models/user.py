@@ -9,6 +9,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     
     # Campo role con valores predefinidos: user, admin
     role: Mapped[str] = mapped_column(
