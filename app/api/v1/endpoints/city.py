@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status
-from typing import List
+from typing import List, Optional
 from app.service.city import CityService
 from app.schemas.city import *
 from app.core.exceptions import AppError
@@ -34,8 +34,8 @@ def get_cities_by_country(country_code: str, service: CityService = Depends(get_
 
 @router.post("/populate", status_code=status.HTTP_200_OK)
 async def populate_cities(
-    country_code: str = None, 
-    limit: int = 50,
+    country_code: Optional[str] = None, 
+    limit: Optional[int] = None,
     service: CityService = Depends(get_city_service),
     admin_user = Depends(allow_admin)
 ):

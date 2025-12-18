@@ -1,6 +1,6 @@
 import httpx
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.core.constants import ErrorCode
@@ -80,7 +80,7 @@ class ExternalAPIService:
     async def fetch_cities_by_country(
         self, 
         country_code: str, 
-        max_rows: int = 100,
+        max_rows: Optional[int] = None,
         min_population: int = 1000
     ) -> List[Dict[str, Any]]:
         """
@@ -88,7 +88,7 @@ class ExternalAPIService:
         
         Args:
             country_code: Código ISO 3166-1 alpha-2 del país (ej: "ES")
-            max_rows: Número máximo de ciudades a obtener
+            max_rows: Número máximo de ciudades a obtener. Si es None, usa el default de la API.
             min_population: Población mínima para incluir la ciudad
             
         Returns:
@@ -107,12 +107,14 @@ class ExternalAPIService:
         params = {
             "country": country_code.upper(),
             "featureClass": "P",       # P = cities, villages
-            "maxRows": max_rows,
             "username": self.geonames_username,
             "orderby": "population",   # Ordenar por importancia/población
             "style": "FULL",           # Obtener todos los detalles
             "lang": "en"               # Nombres en inglés (o local)
         }
+        
+        if max_rows is not None:
+            params["maxRows"] = max_rows
         
         # Opcional: Filtrar por tipo de ciudad para evitar aldeas muy pequeñas
         # featureCode podría usarse (PPLA, PPLC, etc) pero featureClass P + orden por población es efectivo

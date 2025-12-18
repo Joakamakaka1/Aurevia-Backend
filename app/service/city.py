@@ -9,7 +9,6 @@ from app.repository.city import CityRepository
 from app.repository.country import CountryRepository
 from app.service.external_api import ExternalAPIService
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,7 @@ class CityService:
     async def populate_from_api(
         self, 
         country_code: str, 
-        limit: int = 100,
+        limit: Optional[int] = None,
         min_population: int = 10000
     ) -> Dict[str, int]:
         """
@@ -149,8 +148,8 @@ class CityService:
     @transactional
     async def populate_all_countries_cities(
         self, 
-        limit_per_country: int = 50,
-        min_population: int = 50000
+        limit_per_country: Optional[int] = None,
+        min_population: int = 10000
     ) -> Dict[str, any]:
         """
         Pobla ciudades para todos los países en la base de datos.
@@ -165,7 +164,7 @@ class CityService:
         
         # Obtener todos los países
         country_repo = CountryRepository(self.db)
-        countries = country_repo.get_all()
+        countries = country_repo.get_all(limit=None)  # No limit to get all countries
         
         logger.info(f"Iniciando población masiva de ciudades para {len(countries)} países")
         

@@ -7,8 +7,11 @@ class CityRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[City]:
-        return self.db.query(City).offset(skip).limit(limit).all()
+    def get_all(self, skip: int = 0, limit: Optional[int] = 100) -> List[City]:
+        query = self.db.query(City).offset(skip)
+        if limit is not None:
+            query = query.limit(limit)
+        return query.all()
 
     def get_by_id(self, city_id: int) -> Optional[City]:
         return self.db.query(City).filter(City.id == city_id).first()
